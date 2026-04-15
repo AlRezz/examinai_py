@@ -1,6 +1,6 @@
 # Story 1.1: Public pages, static assets, and WebJar UI stack
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -37,25 +37,25 @@ so that **the app shell matches the documented HTTP and static surface before au
 
 ## Tasks / Subtasks
 
-- [ ] **App wiring** (AC: 1, 2, 5)  
-  - [ ] Extend **`create_app()`** in [`src/examai/main.py`](../../src/examai/main.py): mount **`StaticFiles`** for `/css`, `/js`, `/webjars` (separate mounts or a single tree — paths must match the contract).  
-  - [ ] Configure **Jinja2** (`Jinja2Templates`) with a **`templates/`** directory under **`src/examai/`** (or package-resolved path — document the chosen pattern).  
-  - [ ] Register routes for **`GET /`**, **`GET /login`**, **`GET /error`** returning `HTMLResponse` from templates.  
-  - [ ] Keep **`GET /actuator/health`** passing existing [`tests/test_health.py`](../../tests/test_health.py).
+- [x] **App wiring** (AC: 1, 2, 5)  
+  - [x] Extend **`create_app()`** in [`src/examai/main.py`](../../src/examai/main.py): mount **`StaticFiles`** for `/css`, `/js`, `/webjars` (separate mounts or a single tree — paths must match the contract).  
+  - [x] Configure **Jinja2** (`Jinja2Templates`) with a **`templates/`** directory under **`src/examai/`** (or package-resolved path — document the chosen pattern).  
+  - [x] Register routes for **`GET /`**, **`GET /login`**, **`GET /error`** returning `HTMLResponse` from templates.  
+  - [x] Keep **`GET /actuator/health`** passing existing [`tests/test_health.py`](../../tests/test_health.py).
 
-- [ ] **Static content** (AC: 2, 4)  
-  - [ ] Add **`static/`** (or equivalent) under **`src/examai/`** with at least: **`css/examai-theme.css`**, and any **`css/welcome-jqui.css`**, **`js/welcome-jqui-init.js`**, **`css/jquery-ui/themes/flick/jquery-ui.min.css`** per **[docs/component-inventory.md](../../docs/component-inventory.md)**.  
-  - [ ] Vendor **WebJar-equivalent** assets for **Bootstrap 5.3.3**, **jQuery 3.7.1**, **jQuery UI 1.13.2** (same versions as legacy reference) under paths that map to **`/webjars/**`** URLs expected by templates (mirror standard WebJar path segments so script `src`/`href` values stay predictable).
+- [x] **Static content** (AC: 2, 4)  
+  - [x] Add **`static/`** (or equivalent) under **`src/examai/`** with at least: **`css/examai-theme.css`**, and any **`css/welcome-jqui.css`**, **`js/welcome-jqui-init.js`**, **`css/jquery-ui/themes/flick/jquery-ui.min.css`** per **[docs/component-inventory.md](../../docs/component-inventory.md)**.  
+  - [x] Vendor **WebJar-equivalent** assets for **Bootstrap 5.3.3**, **jQuery 3.7.1**, **jQuery UI 1.13.2** (same versions as legacy reference) under paths that map to **`/webjars/**`** URLs expected by templates (mirror standard WebJar path segments so script `src`/`href` values stay predictable).
 
-- [ ] **Templates** (AC: 1, 3, 4)  
-  - [ ] Implement **`index.html`**, **`login.html`**, and error page template(s) using fragments for head/scripts.  
-  - [ ] **`login.html`**: present a **GET** login screen with a form wired for a future **`POST`** login (Story 1.3) — **do not** implement session auth or credential verification in this story.  
-  - [ ] **`GET /error`**: show a user-visible error page (static message or query param is acceptable if documented in code comments; no stack traces).
+- [x] **Templates** (AC: 1, 3, 4)  
+  - [x] Implement **`index.html`**, **`login.html`**, and error page template(s) using fragments for head/scripts.  
+  - [x] **`login.html`**: present a **GET** login screen with a form wired for a future **`POST`** login (Story 1.3) — **do not** implement session auth or credential verification in this story.  
+  - [x] **`GET /error`**: show a user-visible error page (static message or query param is acceptable if documented in code comments; no stack traces).
 
-- [ ] **Tests** (AC: 1–5)  
-  - [ ] Add **`TestClient`** tests: `GET /`, `/login`, `/error` → 200 and `text/html`.  
-  - [ ] Smoke-test key static URLs (theme CSS, at least one `/webjars/...` asset) → 200.  
-  - [ ] Keep or extend health test so it still passes.
+- [x] **Tests** (AC: 1–5)  
+  - [x] Add **`TestClient`** tests: `GET /`, `/login`, `/error` → 200 and `text/html`.  
+  - [x] Smoke-test key static URLs (theme CSS, at least one `/webjars/...` asset) → 200.  
+  - [x] Keep or extend health test so it still passes.
 
 ## Dev Notes
 
@@ -114,14 +114,41 @@ _None — first story in Epic 1._
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
+— 
+
 ### Completion Notes List
+
+- Implemented `create_app()` with Jinja2 templates rooted at `Path(__file__).parent / "templates"` and `StaticFiles` mounts for `/css`, `/js`, `/webjars` mapping to `src/examai/static/{css,js,webjars}`.
+- Vendored WebJar-style paths: `bootstrap/5.3.3`, `jquery/3.7.1`, `jquery-ui/1.13.2` (incl. flick theme CSS); app theme and welcome jQUI helpers under `/css/**` and `/js/welcome-jqui-init.js`.
+- Public routes `GET /`, `/login`, `/error` return HTML; `/error` supports optional `message` query param (user-facing text only).
+- Added `tests/test_public_shell.py`; `tests/test_health.py` unchanged and passing.
 
 ### File List
 
+- `src/examai/main.py`
+- `src/examai/static/css/examai-theme.css`
+- `src/examai/static/css/welcome-jqui.css`
+- `src/examai/static/css/jquery-ui/themes/flick/jquery-ui.min.css`
+- `src/examai/static/js/welcome-jqui-init.js`
+- `src/examai/static/webjars/bootstrap/5.3.3/css/bootstrap.min.css`
+- `src/examai/static/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js`
+- `src/examai/static/webjars/jquery/3.7.1/jquery.min.js`
+- `src/examai/static/webjars/jquery-ui/1.13.2/jquery-ui.min.js`
+- `src/examai/static/webjars/jquery-ui/1.13.2/themes/flick/jquery-ui.min.css`
+- `src/examai/templates/index.html`
+- `src/examai/templates/login.html`
+- `src/examai/templates/error.html`
+- `src/examai/templates/fragments/head-bootstrap.html`
+- `src/examai/templates/fragments/head-welcome-jqui.html`
+- `src/examai/templates/fragments/welcome-scripts.html`
+- `tests/test_public_shell.py`
+- `pyproject.toml`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** Implementation complete; ready for code review.

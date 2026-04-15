@@ -1,0 +1,8 @@
+/* jQuery UI welcome area — complements flick theme (Story 1-1). */
+.examai-welcome-jqui {
+  max-width: 48rem;
+}
+
+.examai-welcome-jqui .ui-accordion .ui-accordion-header {
+  font-size: 1rem;
+}

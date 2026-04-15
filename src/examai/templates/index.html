@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Examinai</title>
+  {% include "fragments/head-welcome-jqui.html" %}
+</head>
+<body class="examai-shell">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light examai-nav">
+    <div class="container">
+      <a class="navbar-brand" href="/">Examinai</a>
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="/login">Sign in</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4">
+    <h1 class="h3 mb-3">Welcome</h1>
+    <p class="text-muted">Server-rendered shell (Story 1-1). Authentication arrives in a later story.</p>
+    <div class="examai-welcome-jqui mt-4">
+      <div id="welcome-accordion">
+        <h3>jQuery UI check</h3>
+        <div>
+          <p class="mb-0">If this accordion works, jQuery UI (flick theme) is wired correctly.</p>
+        </div>
+        <h3>Stack</h3>
+        <div>
+          <p class="mb-0">Bootstrap 5, jQuery, and jQuery UI are loaded from <code>/webjars/**</code>.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+  <script src="/webjars/jquery-ui/1.13.2/jquery-ui.min.js"></script>
+  <script src="/js/welcome-jqui-init.js"></script>
+</body>
+</html>

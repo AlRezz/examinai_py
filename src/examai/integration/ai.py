@@ -22,6 +22,38 @@ class OllamaGenerateResult:
     model_version: str | None
 
 
+def _friendly_model_missing_message(response: httpx.Response, configured_model: str) -> str | None:
+    """
+    Map Ollama HTTP errors (e.g. 404) and JSON `error` payloads to an operator-facing message.
+
+    Typical body: {"error":"model 'deepseek-r1:8b' not found"}
+    """
+    try:
+        payload = response.json()
+    except Exception:
+        payload = None
+    err: str | None = None
+    if isinstance(payload, dict):
+        raw = payload.get("error")
+        if isinstance(raw, str):
+            err = raw
+    if err is None:
+        try:
+            text = response.text[:500]
+        except Exception:
+            text = ""
+        err = text or None
+    if not err:
+        return None
+    low = err.lower()
+    if "not found" in low and "model" in low:
+        return (
+            f"Model '{configured_model}' is not available in Ollama. "
+            "On the LLM host run `ollama pull` for that tag, or set OLLAMA_MODEL to a model you have already pulled."
+        )
+    return None
+
+
 def _parse_generate_json(payload: dict[str, Any]) -> tuple[str, str, str | None]:
     if payload.get("error"):
         raise OllamaClientError(str(payload["error"]))
@@ -60,6 +92,9 @@ def ollama_generate(
                 r.raise_for_status()
                 payload = r.json()
         except httpx.HTTPStatusError as e:
+            friendly = _friendly_model_missing_message(e.response, model)
+            if friendly:
+                raise OllamaClientError(friendly) from e
             detail = ""
             try:
                 detail = e.response.text[:500]

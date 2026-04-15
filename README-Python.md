@@ -84,13 +84,13 @@ Point **`EXAMINAI_DATABASE_URL`** at that instance. Without **`EXAMINAI_USE_LIQU
 
 ## Run the LLM (Ollama) via Docker
 
-**With Compose:** the **`llm`** service is **`ollama/ollama`** with models stored in **`ollama_data`**. The app must use **`OLLAMA_BASE_URL=http://llm:11434`** on the Compose network (not `127.0.0.1`). On first use, pull a model inside the container (can take a long time):
+**With Compose:** the **`llm`** service is **`ollama/ollama`** with models stored in **`ollama_data`**. The app must use **`OLLAMA_BASE_URL=http://llm:11434`** on the Compose network (not `127.0.0.1`). **`OLLAMA_MODEL`** in your **`.env`** is passed to both **`app`** and **`llm`**: on **`llm`** start, **`scripts/ollama-compose-entrypoint.sh`** runs **`ollama pull`** for that tag so the model is present (first pull can take a long time; later starts are quick if the volume already has the weights). You can still pull manually if needed:
 
 ```bash
 docker compose exec llm ollama pull llama3.2
 ```
 
-Set **`OLLAMA_MODEL`** to the tag you pulled. If Ollama is missing or unreachable, mentor AI-draft flows show a **degraded** state; human review still works (see [docs/deployment-guide.md](docs/deployment-guide.md) and FR31–FR32 in the PRD).
+If the tag is wrong, offline, or the pull fails, mentor AI-draft may show an error until you fix **`OLLAMA_MODEL`** or pull the model; human review still works (see [docs/deployment-guide.md](docs/deployment-guide.md) and FR31–FR32 in the PRD).
 
 ### Git provider (mentor submission workspace)
 

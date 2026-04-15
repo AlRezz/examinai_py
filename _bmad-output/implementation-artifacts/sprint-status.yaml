@@ -1,5 +1,5 @@
 # generated: 2026-04-15T16:00:00Z
-# last_updated: 2026-04-15T23:00:00Z
+# last_updated: 2026-04-15T22:30:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T16:00:00Z"
-last_updated: "2026-04-16T20:00:00Z"
+last_updated: "2026-04-15T22:30:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -77,6 +77,7 @@ development_status:
   epic-5: done
   5-1-request-ai-draft-with-audit-trail: done
   5-2-degraded-llm-experience-without-blocking-humans: done
+  5-3-ollama-model-missing-clear-messaging: done
   epic-5-retrospective: optional
 
   epic-6: done

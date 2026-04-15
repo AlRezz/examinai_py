@@ -74,7 +74,7 @@ Project planning may defer **mandatory** automated test gates during early work;
 ## Ollama (optional — AI flows)
 
 - Set **`OLLAMA_BASE_URL`** and model selection as wired in code (e.g. **`OLLAMA_MODEL`**).
-- On the host: `ollama pull <tag>` so the model exists before mentor AI-draft flows.
+- **Docker Compose:** the **`llm`** service entrypoint pulls **`OLLAMA_MODEL`** on start; otherwise on the host run `ollama pull <tag>` before mentor AI-draft flows.
 
 ## Git integration (optional)
 

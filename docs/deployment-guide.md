@@ -26,7 +26,7 @@ Typical variables — document names in this guide and/or repo **`.env.example`*
 - **`EXAMINAI_USE_LIQUIBASE`** — set to **`1`** in the Compose **`app`** service so the app **skips** SQLAlchemy `create_all` and expects Liquibase-managed tables. In **`docker-compose.yml`**, the **`db-migrate`** service (image **`liquibase/liquibase`**) runs **`liquibase update`** against **`db/changelog/`** before **`app`** starts; the application image does **not** bundle OpenJDK.
 - **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** / **`EXAMINAI_ADMIN_EMAIL`** — first **administrator** bootstrap after migrations when no admin user exists yet (see **README-Python.md**). **`docker compose`** defaults the password to **`Admin`** when unset; set an explicit strong value for non-local deployments.
 - **`OLLAMA_BASE_URL`** — inside Compose use **`http://llm:11434`** (not `127.0.0.1`).
-- **`OLLAMA_MODEL`** — must match a pulled model on the `llm` service.
+- **`OLLAMA_MODEL`** — tag the app sends to Ollama; must exist on the **`llm`** host. Root **`docker-compose.yml`** passes the same value to **`llm`** as **`OLLAMA_PULL_MODEL`**, and **`scripts/ollama-compose-entrypoint.sh`** runs **`ollama pull`** on **`llm`** container start (first pull can take a long time).
 - **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`**, **`GIT_PROVIDER_TIMEOUT_SECONDS`** — mentor Git fetch flows; root **`docker-compose.yml`** passes **`GIT_PROVIDER_*`** from **`.env`** into the **`app`** service (see **README-Python.md**).
 
 The **`llm`** service entrypoint in reference Compose may run **`ollama pull`** — first boot can take a long time.

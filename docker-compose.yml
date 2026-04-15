@@ -43,6 +43,11 @@ services:
     image: ollama/ollama
     volumes:
       - ollama_data:/root/.ollama
+      - ./scripts/ollama-compose-entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    environment:
+      # Same tag as `app` → `OLLAMA_MODEL` (from host `.env`). Pulled on llm container start when missing.
+      OLLAMA_PULL_MODEL: ${OLLAMA_MODEL:-llama3.2}
     ports:
       - "11434:11434"
 

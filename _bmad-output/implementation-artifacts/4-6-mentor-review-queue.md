@@ -72,4 +72,4 @@ so that **I can triage workload**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

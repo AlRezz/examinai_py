@@ -82,4 +82,4 @@ Composer (Cursor agent)
 
 ---
 
-**Story completion status:** **review** — ACs satisfied; full suite `85 passed` (2026-04-15).
+**Story completion status:** **done** — ACs satisfied; full suite `85 passed` (2026-04-15).

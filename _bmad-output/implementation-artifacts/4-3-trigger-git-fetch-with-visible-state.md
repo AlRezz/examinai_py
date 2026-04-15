@@ -82,4 +82,4 @@ so that **I review real code, not stale guesses**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

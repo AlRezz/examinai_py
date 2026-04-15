@@ -72,4 +72,4 @@ so that **retrieval can proceed even if the intern made mistakes**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

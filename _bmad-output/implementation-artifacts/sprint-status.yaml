@@ -1,5 +1,5 @@
-# generated: 2026-04-15T15:40:00Z
-# last_updated: 2026-04-15T15:40:00Z
+# generated: 2026-04-15T16:00:00Z
+# last_updated: 2026-04-15T16:00:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -34,8 +34,8 @@
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: "2026-04-15T15:40:00Z"
-last_updated: "2026-04-15T15:40:00Z"
+generated: "2026-04-15T16:00:00Z"
+last_updated: "2026-04-15T16:00:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -62,13 +62,13 @@ development_status:
   3-4-submission-lifecycle-status-badge: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
-  4-1-submissions-list-and-mentor-workspace: review
-  4-2-update-coordinates-from-the-workspace: review
-  4-3-trigger-git-fetch-with-visible-state: review
-  4-4-save-mentor-draft-review: review
-  4-5-publish-review-with-snapshot-metadata: review
-  4-6-mentor-review-queue: review
+  epic-4: done
+  4-1-submissions-list-and-mentor-workspace: done
+  4-2-update-coordinates-from-the-workspace: done
+  4-3-trigger-git-fetch-with-visible-state: done
+  4-4-save-mentor-draft-review: done
+  4-5-publish-review-with-snapshot-metadata: done
+  4-6-mentor-review-queue: done
   epic-4-retrospective: optional
 
   epic-5: done

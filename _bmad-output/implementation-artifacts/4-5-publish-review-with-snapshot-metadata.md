@@ -64,4 +64,4 @@ so that **feedback is tied to evidence at publish time**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

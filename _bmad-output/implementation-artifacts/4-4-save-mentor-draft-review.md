@@ -64,4 +64,4 @@ so that **I can iterate before publishing**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

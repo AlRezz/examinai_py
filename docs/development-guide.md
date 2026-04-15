@@ -23,7 +23,7 @@ This installs the **`examai`** package in editable mode and dev tools (**pytest*
 
 ## Configuration
 
-- **Environment variables** — Use a local **`.env`** file (not committed) for secrets and service URLs. Typical names (wire in code as implemented): database URL/DSN, **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`**, **`OLLAMA_BASE_URL`**, **`OLLAMA_MODEL`**, and any **`EXAMINAI_*`** tuning. Add a committed **`.env.example`** at the repo root when the project standardizes names.
+- **Environment variables** — Use a local **`.env`** file (not committed) for secrets and service URLs. Typical names (wire in code as implemented): database URL/DSN, **`EXAMINAI_USE_LIQUIBASE`** (Docker + Postgres), **`EXAMINAI_ADMIN_INITIAL_PASSWORD`**, **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`**, **`OLLAMA_BASE_URL`**, **`OLLAMA_MODEL`**, and any **`EXAMINAI_*`** tuning. See **`.env.example`** at the repo root.
 - **Application code** — `src/examai/` (entry: **`examai.main:app`**).
 
 Do not commit tokens or production passwords.

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.coverage
+htmlcov
+JAVA_APP
+_bmad-output
+.cursor
+*.egg-info
+.mypy_cache
+.ruff_cache

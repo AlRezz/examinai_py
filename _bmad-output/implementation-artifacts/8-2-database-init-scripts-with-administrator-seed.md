@@ -1,6 +1,6 @@
 # Story 8.2: Database init scripts with administrator seed
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

@@ -1,6 +1,6 @@
 # Story 8.7: README-Python — user flows for all user types
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

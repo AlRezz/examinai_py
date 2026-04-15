@@ -15,7 +15,7 @@ Examinai is a **monolithic server-rendered web application** for internship-styl
 3. **Domain / persistence** — SQLAlchemy 2.x models and repositories; **UUID** keys aligned with [data-models.md](./data-models.md).
 4. **Integration** — `examai.integration` (or equivalent): **httpx** clients for Ollama and GitHub-compatible REST; explicit timeouts, errors, and degraded behavior.
 
-Cross-cutting: **session-based auth**, **role-gated routes** (documented URL rules; legacy snapshot optional for comparison), **`GET /actuator/health`**, **Alembic** (future sole owner of migrations) aligned with [data-models.md](./data-models.md); optional Liquibase files under **`JAVA_APP/`** are **DDL reference only** if a snapshot exists.
+Cross-cutting: **session-based auth**, **role-gated routes** (documented URL rules; legacy snapshot optional for comparison), **`GET /actuator/health`**, schema evolution via **`db/changelog/`** (Liquibase when **`EXAMINAI_USE_LIQUIBASE`** is set) and [data-models.md](./data-models.md); optional Liquibase/JPA under **`JAVA_APP/`** remains **DDL reference only** if a snapshot exists.
 
 ## Security model
 
@@ -29,7 +29,7 @@ Cross-cutting: **session-based auth**, **role-gated routes** (documented URL rul
 
 ## Data architecture
 
-**PostgreSQL.** Table definitions follow [data-models.md](./data-models.md) and evolve via **Alembic** when it owns migrations. **Liquibase** YAML under **`JAVA_APP/.../db/changelog/`** (if present) is **reference DDL only**, not part of the Python deployment path.
+**PostgreSQL.** Table definitions follow [data-models.md](./data-models.md). The **Docker** app image runs **Liquibase** against **`db/changelog/`** before Uvicorn when **`EXAMINAI_USE_LIQUIBASE`** is enabled. **Liquibase** YAML under **`JAVA_APP/.../db/changelog/`** (if present) is **reference DDL only** for parity checks, not a runtime dependency of the Python stack.
 
 ## AI and degraded behavior
 

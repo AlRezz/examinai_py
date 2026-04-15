@@ -1,6 +1,6 @@
 # Story 8.1: Dockerfiles and Docker Compose for app, database, and LLM
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -31,11 +31,11 @@ so that **I can reproduce the full stack locally or in a lab without manual inst
 
 ## Tasks / Subtasks
 
-- [ ] Add root **`Dockerfile`** for the Python app (multi-stage optional); expose **8080**; non-root user if practical.
-- [ ] Add **`docker-compose.yml`** (and optionally **`compose.override.yml`** for dev) with services **`app`**, **`db`** (PostgreSQL), **`llm`** (Ollama image).
-- [ ] Add **`.env.example`** at repo root listing **`DATABASE_URL`**, **`OLLAMA_BASE_URL`**, **`OLLAMA_MODEL`**, and other vars from **[docs/deployment-guide.md](../../docs/deployment-guide.md)** / **[docs/development-guide.md](../../docs/development-guide.md)**.
-- [ ] Document **`depends_on`** / health-aware startup so the app does not connect before DB is accepting connections (simple retry in app or `healthcheck` + condition — choose one pattern and document).
-- [ ] Smoke: **`curl` health** — `GET /actuator/health` returns contract JSON (**[docs/api-contracts.md](../../docs/api-contracts.md)**, **[project-context](../project-context.md)**).
+- [x] Add root **`Dockerfile`** for the Python app (multi-stage optional); expose **8080**; non-root user if practical.
+- [x] Add **`docker-compose.yml`** (and optionally **`compose.override.yml`** for dev) with services **`app`**, **`db`** (PostgreSQL), **`llm`** (Ollama image).
+- [x] Add **`.env.example`** at repo root listing **`EXAMINAI_DATABASE_URL`** (Python DSN), **`OLLAMA_BASE_URL`**, **`OLLAMA_MODEL`**, and other vars from **[docs/deployment-guide.md](../../docs/deployment-guide.md)** / **[docs/development-guide.md](../../docs/development-guide.md)**.
+- [x] Document **`depends_on`** / health-aware startup so the app does not connect before DB is accepting connections (simple retry in app or `healthcheck` + condition — choose one pattern and document).
+- [ ] Smoke: **`curl` health** — `GET /actuator/health` returns contract JSON (**[docs/api-contracts.md](../../docs/api-contracts.md)**, **[project-context](../project-context.md)**) — *run locally after `docker compose up`*.
 
 ## Dev Notes
 
@@ -71,7 +71,19 @@ _(filled on implementation)_
 
 ### Completion Notes List
 
+- Root **`Dockerfile`**: Python 3.12 slim, `pip install .`, non-root **`appuser`**, Uvicorn **`examai.main:app`** on **8080**.
+- **`docker-compose.yml`**: **`db`** (Postgres **5432**, healthcheck), **`llm`** (Ollama **11434**, volume **`ollama_data`**), **`app`** (build context `.`, **`OLLAMA_BASE_URL=http://llm:11434`**, **`EXAMINAI_DATABASE_URL`** to **`db`**). Comment reserves **`docker-entrypoint-initdb.d`** for Epic 8.2.
+- **`.dockerignore`** to keep build context small.
+- **`.env.example`** documents **`EXAMINAI_DATABASE_URL`** (actual app variable; not `DATABASE_URL`).
+- **`docs/deployment-guide.md`**: clarified Python DSN env name.
+
 ### File List
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+- `.env.example`
+- `docs/deployment-guide.md` (DSN env name)
 
 ---
 

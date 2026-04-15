@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 from typing import Optional
 
@@ -66,6 +67,17 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-def create_schema(engine: Optional[Engine] = None) -> None:
+def _skip_sqlalchemy_create_all(settings: Settings) -> bool:
+    """When Liquibase owns DDL (Docker PostgreSQL), skip SQLAlchemy create_all."""
+    if not settings.database_url.startswith("postgresql"):
+        return False
+    v = (os.environ.get("EXAMINAI_USE_LIQUIBASE") or "").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
+
+def create_schema(engine: Optional[Engine] = None, settings: Optional[Settings] = None) -> None:
+    s = settings if settings is not None else get_settings()
+    if _skip_sqlalchemy_create_all(s):
+        return
     eng = engine or get_engine()
     Base.metadata.create_all(bind=eng)

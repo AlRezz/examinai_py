@@ -22,7 +22,9 @@ The checked-in multi-stage build uses **Temurin 21**, runs **`./mvnw package`**,
 
 Typical variables — document names in this guide and/or repo **`.env.example`**; **`JAVA_APP/.env.example`** (if present) may be used **only as a naming cross-reference**:
 
-- **Database** — JDBC-style `SPRING_DATASOURCE_*` in reference Java stack; Python should use equivalent **`DATABASE_URL`** / DSN once configured.
+- **Database** — JDBC-style `SPRING_DATASOURCE_*` in reference Java stack; Python uses **`EXAMINAI_DATABASE_URL`** (SQLAlchemy DSN, e.g. `postgresql+psycopg://…`).
+- **`EXAMINAI_USE_LIQUIBASE`** — set to **`1`** in the Compose **`app`** service so **Liquibase** runs **`db/changelog/`** before the server starts; do not rely on SQLAlchemy `create_all` for that deployment.
+- **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** / **`EXAMINAI_ADMIN_EMAIL`** — optional first **administrator** bootstrap after migrations (see **README-Python.md**).
 - **`OLLAMA_BASE_URL`** — inside Compose use **`http://llm:11434`** (not `127.0.0.1`).
 - **`OLLAMA_MODEL`** — must match a pulled model on the `llm` service.
 - **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`** — for mentor Git fetch flows.

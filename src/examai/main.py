@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 
-from examai.bootstrap import ensure_roles, maybe_seed_demo_user
+from examai.bootstrap import ensure_roles, maybe_seed_demo_user, maybe_seed_initial_admin
 from examai.config import Settings, get_settings
 from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import create_schema, get_db, get_session_factory, configure_engine
@@ -38,10 +38,11 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        create_schema()
+        create_schema(settings=settings)
         db = get_session_factory()()
         try:
             ensure_roles(db)
+            maybe_seed_initial_admin(db, settings)
             maybe_seed_demo_user(db, settings)
         finally:
             db.close()

@@ -1,6 +1,6 @@
 # Story 8.5: README-Python — run the database as a Docker image
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

@@ -1,6 +1,6 @@
 # Story 8.3: Liquibase migrations on application startup
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

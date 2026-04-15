@@ -1,6 +1,6 @@
 # Story 8.4: README-Python — run the application as a Docker image
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

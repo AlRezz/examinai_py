@@ -1,6 +1,6 @@
 # Story 8.6: README-Python — run the LLM as a Docker image
 
-Status: backlog
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

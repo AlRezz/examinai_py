@@ -1,6 +1,8 @@
 # Data Models and Schema (Examinai)
 
-**Authority for the Python app:** **[This document](./data-models.md)** summarizes tables and columns for **`src/examai/`** SQLAlchemy models and application code. **PostgreSQL** is the database; **Alembic** owns **forward** schema revisions once it is the sole migration pipeline.
+**Authority for the Python app:** **[This document](./data-models.md)** summarizes tables and columns for **`src/examai/`** SQLAlchemy models and application code. **PostgreSQL** is the database.
+
+**Migrations:** The **Docker** stack (see `docker-compose.yml`, `Dockerfile`) runs **Liquibase** on startup when **`EXAMINAI_USE_LIQUIBASE`** is set; changelogs live under **`db/changelog/`** (baseline: `001-baseline.postgresql.sql`). **Do not** duplicate that DDL in Postgres `docker-entrypoint-initdb.d` — init scripts there are for optional hooks only; **Liquibase owns DDL** in that deployment mode. For local development on **SQLite** or Postgres without Liquibase, the app may still use SQLAlchemy **`create_all`** (see `examai.database.create_schema`). **Alembic** remains available in **`pyproject.toml`** for a future single migration pipeline; until Alembic revisions exist, treat **Liquibase** as the source of truth for containerized PostgreSQL schema.
 
 **Reference (`JAVA_APP/` — if a snapshot exists locally):** Historical **Liquibase** YAML under **`JAVA_APP/src/main/resources/db/changelog/`** (master: `db.changelog-master.yaml`) can be used to **cross-check** DDL details (column types, constraints). It is **not** a runtime or deployment dependency of the Python stack. **JPA** entities under `com.examinai.app.domain` in that snapshot map the same tables — use them only to verify names and relationships when building SQLAlchemy models; **do not** treat JPA as a source for new Python code.
 
@@ -81,4 +83,4 @@ Implement corresponding **SQLAlchemy** models under `src/examai/` as features la
 
 ---
 
-_Implementation: this doc + PostgreSQL + ORM in `src/examai/`. Optional Liquibase/JPA under `JAVA_APP/` — reference only._
+_Implementation: this doc + PostgreSQL + ORM in `src/examai/`. **Liquibase** changelogs at **`db/changelog/`** for Docker PostgreSQL; **`JAVA_APP/`** Liquibase/JPA — reference only._

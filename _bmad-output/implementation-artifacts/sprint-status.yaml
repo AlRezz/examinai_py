@@ -1,5 +1,5 @@
 # generated: 2026-04-15T07:41:12Z
-# last_updated: 2026-04-15T12:00:00Z
+# last_updated: 2026-04-15T14:30:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T07:41:12Z"
-last_updated: "2026-04-15T12:00:00Z"
+last_updated: "2026-04-15T14:30:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -67,7 +67,7 @@ development_status:
   4-2-update-coordinates-from-the-workspace: review
   4-3-trigger-git-fetch-with-visible-state: review
   4-4-save-mentor-draft-review: review
-  4-5-publish-review-with-snapshot-metadata: backlog
+  4-5-publish-review-with-snapshot-metadata: review
   4-6-mentor-review-queue: backlog
   epic-4-retrospective: optional
 

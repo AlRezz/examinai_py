@@ -367,6 +367,15 @@ def test_publish_review_persists_and_shows_flash(client: TestClient, test_settin
         mentor_email="mw-mentor-pub@example.com",
         intern_email="mw-intern-pub@example.com",
     )
+    db0 = get_session_factory()()
+    try:
+        sub = db0.get(Submission, sub_id)
+        assert sub is not None
+        sub.git_fetch_version = "fetch-ver-9"
+        db0.commit()
+    finally:
+        db0.close()
+
     login_with_password(client, mentor.email, "secret")
 
     patched = replace(test_settings, ollama_base_url="")
@@ -397,6 +406,8 @@ def test_publish_review_persists_and_shows_flash(client: TestClient, test_settin
         assert pub.narrative == "Ship it with notes."
         assert pub.publishing_mentor_user_id == mentor.id
         assert pub.snapshot_commit_sha == "abc123"
+        assert pub.snapshot_path_scope == "/src"
+        assert pub.snapshot_git_fetch_version == "fetch-ver-9"
     finally:
         db.close()
 

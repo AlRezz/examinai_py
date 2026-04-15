@@ -129,6 +129,13 @@ class Submission(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, onupdate=_utc_now, nullable=False
     )
+    # Git retrieval (docs/data-models.md) — populated by mentor/workspace flows; nullable until used.
+    git_retrieval_state: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    git_retrieval_error_code: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    git_retrieved_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    git_last_success_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    git_last_attempt_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    git_fetch_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     model_invocations: Mapped[list["ModelInvocation"]] = relationship(
         back_populates="submission",

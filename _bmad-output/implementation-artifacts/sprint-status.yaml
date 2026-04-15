@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T07:41:12Z"
-last_updated: "2026-04-15T09:45:00Z"
+last_updated: "2026-04-16T00:00:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -57,9 +57,9 @@ development_status:
 
   epic-3: in-progress
   3-1-view-assigned-tasks-and-task-detail: review
-  3-2-submit-or-update-submission-coordinates: backlog
-  3-3-view-published-feedback: backlog
-  3-4-submission-lifecycle-status-badge: backlog
+  3-2-submit-or-update-submission-coordinates: review
+  3-3-view-published-feedback: review
+  3-4-submission-lifecycle-status-badge: review
   epic-3-retrospective: optional
 
   epic-4: in-progress

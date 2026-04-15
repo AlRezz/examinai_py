@@ -1,0 +1,2 @@
+{# UX-DR4: single visible pipeline badge for intern task / submission views #}
+<span class="badge {{ submission_lifecycle.css_class }} align-middle"{% if submission_lifecycle.title %} title="{{ submission_lifecycle.title }}"{% endif %}>{{ submission_lifecycle.label }}</span>

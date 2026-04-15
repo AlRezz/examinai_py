@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Published feedback — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <a class="nav-link py-0" href="/intern/tasks">My tasks</a>
+        <a class="nav-link py-0" href="/home">Home</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1" role="main">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/intern/tasks">My tasks</a></li>
+        <li class="breadcrumb-item"><a href="/intern/tasks/{{ task.id }}">{{ task.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Published feedback</li>
+      </ol>
+    </nav>
+    {% if flash %}
+    <div class="alert alert-info" role="alert">{{ flash }}</div>
+    {% endif %}
+    <h1 class="h3 mb-2 d-flex flex-wrap align-items-center gap-2">Published feedback{% include "intern/fragments/submission-lifecycle-badge.html" %}</h1>
+    <p class="text-muted small mb-4">
+      Official outcome for <strong>{{ task.title }}</strong>,
+      published {{ published.published_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+    </p>
+
+    <section aria-labelledby="scores-heading" class="mb-4">
+      <h2 id="scores-heading" class="h5">Scores</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Quality</dt>
+        <dd class="col-sm-9">{% if published.quality_score is not none %}{{ published.quality_score }}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-3">Readability</dt>
+        <dd class="col-sm-9">{% if published.readability_score is not none %}{{ published.readability_score }}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-3">Correctness</dt>
+        <dd class="col-sm-9">{% if published.correctness_score is not none %}{{ published.correctness_score }}{% else %}—{% endif %}</dd>
+      </dl>
+    </section>
+
+    <section aria-labelledby="narrative-heading" class="mb-4">
+      <h2 id="narrative-heading" class="h5">Narrative</h2>
+      {% if published.narrative %}
+      <div class="border rounded p-3 bg-light">{{ published.narrative }}</div>
+      {% else %}
+      <p class="text-muted mb-0">No narrative was included with this publication.</p>
+      {% endif %}
+    </section>
+
+    <section aria-labelledby="snapshot-heading" class="mb-0">
+      <h2 id="snapshot-heading" class="h5">Evidence snapshot</h2>
+      <p class="small text-muted mb-2">Context recorded when this feedback was published.</p>
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Commit SHA</dt>
+        <dd class="col-sm-9"><code>{% if published.snapshot_commit_sha %}{{ published.snapshot_commit_sha }}{% else %}—{% endif %}</code></dd>
+        <dt class="col-sm-3">Path scope</dt>
+        <dd class="col-sm-9">{% if published.snapshot_path_scope %}{{ published.snapshot_path_scope }}{% else %}—{% endif %}</dd>
+        <dt class="col-sm-3">Git fetch version</dt>
+        <dd class="col-sm-9">{% if published.snapshot_git_fetch_version %}{{ published.snapshot_git_fetch_version }}{% else %}—{% endif %}</dd>
+      </dl>
+    </section>
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

@@ -136,7 +136,7 @@ def upsert_published_review(
     existing = get_published_review(session, submission.id)
     snap_sha = submission.commit_sha
     snap_path = submission.path_scope
-    snap_ver = None  # git_fetch_version when Epic 4 lands on Submission model
+    snap_ver = submission.git_fetch_version
     if existing is None:
         row = PublishedReview(
             submission_id=submission.id,

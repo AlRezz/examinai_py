@@ -1,4 +1,4 @@
-"""Story 6.2: admin create user with roles."""
+"""Stories 6.2–6.3: admin create and edit users with roles."""
 
 from __future__ import annotations
 
@@ -192,3 +192,191 @@ def test_create_user_requires_role(client: TestClient) -> None:
     assert r2.status_code == 303
     r3 = client.get("/admin/users/new")
     assert "at least one role" in r3.text.lower()
+
+
+def test_admin_edit_user_form(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-ed@example.com", "p", "administrator")
+    _seed_user("subject@example.com", "pw", "intern")
+    login_with_password(client, "admin-ed@example.com", "p")
+    uid = _user_id_by_email("subject@example.com")
+    r = client.get(f"/admin/users/{uid}/edit")
+    assert r.status_code == 200
+    assert "Edit user" in r.text
+    assert "subject@example.com" in r.text
+    assert 'name="role_name"' in r.text
+    assert "$2b$" not in r.text
+
+
+def test_admin_edits_user_roles_and_email(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-e2@example.com", "p", "administrator")
+    _seed_user("editable@example.com", "pw", "intern")
+    login_with_password(client, "admin-e2@example.com", "p")
+    uid = _user_id_by_email("editable@example.com")
+    r = client.get(f"/admin/users/{uid}/edit")
+    csrf = extract_csrf(r.text)
+    r2 = client.post(
+        f"/admin/users/{uid}/edit",
+        data={
+            "csrf_token": csrf,
+            "email": "updated@example.com",
+            "password": "",
+            "enabled": "on",
+            "role_name": ["mentor"],
+        },
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    assert r2.headers.get("location") == "/admin/users"
+
+    db = get_session_factory()()
+    try:
+        u = db.execute(select(User).where(User.email == "updated@example.com")).scalar_one_or_none()
+        assert u is not None
+        assert {role.name for role in u.roles} == {"mentor"}
+    finally:
+        db.close()
+
+
+def test_edit_password_optional_preserves_hash(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-ph@example.com", "p", "administrator")
+    _seed_user("keeppw@example.com", "secret99", "intern")
+    uid = _user_id_by_email("keeppw@example.com")
+    db = get_session_factory()()
+    try:
+        before = db.execute(select(User).where(User.id == uid)).scalar_one()
+        h1 = before.password_hash
+    finally:
+        db.close()
+
+    login_with_password(client, "admin-ph@example.com", "p")
+    r = client.get(f"/admin/users/{uid}/edit")
+    csrf = extract_csrf(r.text)
+    client.post(
+        f"/admin/users/{uid}/edit",
+        data={
+            "csrf_token": csrf,
+            "email": "keeppw@example.com",
+            "password": "",
+            "enabled": "on",
+            "role_name": ["intern"],
+        },
+        follow_redirects=False,
+    )
+    db = get_session_factory()()
+    try:
+        after = db.execute(select(User).where(User.id == uid)).scalar_one()
+        assert after.password_hash == h1
+    finally:
+        db.close()
+
+
+def test_non_admin_forbidden_from_edit(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("mentor-ed@example.com", "p", "mentor")
+    _seed_user("victim@example.com", "x", "intern")
+    uid = _user_id_by_email("victim@example.com")
+    login_with_password(client, "mentor-ed@example.com", "p")
+    assert client.get(f"/admin/users/{uid}/edit").status_code == 403
+
+
+def test_edit_unknown_user_404(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-404@example.com", "p", "administrator")
+    login_with_password(client, "admin-404@example.com", "p")
+    missing = uuid.uuid4()
+    assert client.get(f"/admin/users/{missing}/edit").status_code == 404
+
+
+def test_edit_user_rejects_bad_csrf(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-ec@example.com", "p", "administrator")
+    _seed_user("csrf-t@example.com", "x", "intern")
+    uid = _user_id_by_email("csrf-t@example.com")
+    login_with_password(client, "admin-ec@example.com", "p")
+    r = client.post(
+        f"/admin/users/{uid}/edit",
+        data={
+            "csrf_token": "nope",
+            "email": "csrf-t@example.com",
+            "role_name": ["intern"],
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    assert r.headers.get("location") == f"/admin/users/{uid}/edit"
+    r2 = client.get(f"/admin/users/{uid}/edit")
+    assert "Invalid or missing security token" in r2.text
+
+
+def test_edit_user_duplicate_email(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-dp2@example.com", "p", "administrator")
+    _seed_user("a@example.com", "p", "intern")
+    _seed_user("b@example.com", "p", "intern")
+    login_with_password(client, "admin-dp2@example.com", "p")
+    bid = _user_id_by_email("b@example.com")
+    r = client.get(f"/admin/users/{bid}/edit")
+    csrf = extract_csrf(r.text)
+    r2 = client.post(
+        f"/admin/users/{bid}/edit",
+        data={
+            "csrf_token": csrf,
+            "email": "a@example.com",
+            "password": "",
+            "enabled": "on",
+            "role_name": ["intern"],
+        },
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    r3 = client.get(f"/admin/users/{bid}/edit")
+    assert "already exists" in r3.text.lower()
+
+
+def test_admin_cannot_strip_own_admin_role(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("self-ad@example.com", "p", "administrator")
+    login_with_password(client, "self-ad@example.com", "p")
+    uid = _user_id_by_email("self-ad@example.com")
+    r = client.get(f"/admin/users/{uid}/edit")
+    csrf = extract_csrf(r.text)
+    r2 = client.post(
+        f"/admin/users/{uid}/edit",
+        data={
+            "csrf_token": csrf,
+            "email": "self-ad@example.com",
+            "password": "",
+            "enabled": "on",
+            "role_name": ["intern"],
+        },
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    r3 = client.get(f"/admin/users/{uid}/edit")
+    assert "cannot remove your own administrator" in r3.text.lower()
+
+
+def test_admin_cannot_disable_self(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("self-dis@example.com", "p", "administrator")
+    login_with_password(client, "self-dis@example.com", "p")
+    uid = _user_id_by_email("self-dis@example.com")
+    r = client.get(f"/admin/users/{uid}/edit")
+    csrf = extract_csrf(r.text)
+    r2 = client.post(
+        f"/admin/users/{uid}/edit",
+        data={
+            "csrf_token": csrf,
+            "email": "self-dis@example.com",
+            "password": "",
+            "enabled": "",
+            "role_name": ["administrator"],
+        },
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    r3 = client.get(f"/admin/users/{uid}/edit")
+    assert "cannot disable your own account" in r3.text.lower()

@@ -1,6 +1,6 @@
 # Story 6.1: List users
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -82,4 +82,4 @@ Composer (Cursor agent)
 
 ---
 
-**Story completion status:** Implementation complete; sprint status **review**.
+**Story completion status:** Done (`done` in sprint-status).

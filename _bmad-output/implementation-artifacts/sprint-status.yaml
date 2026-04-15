@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T07:41:12Z"
-last_updated: "2026-04-15T23:55:00Z"
+last_updated: "2026-04-15T23:59:59Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -50,7 +50,7 @@ development_status:
   1-5-csrf-on-mutating-requests: done
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done
   2-1-list-create-and-edit-tasks: done
   2-2-assign-interns-to-a-task: done
   epic-2-retrospective: optional
@@ -76,10 +76,10 @@ development_status:
   5-2-degraded-llm-experience-without-blocking-humans: done
   epic-5-retrospective: optional
 
-  epic-6: in-progress
-  6-1-list-users: review
-  6-2-create-user-with-roles: review
-  6-3-edit-user-and-roles: in-progress
+  epic-6: done
+  6-1-list-users: done
+  6-2-create-user-with-roles: done
+  6-3-edit-user-and-roles: done
   epic-6-retrospective: optional
 
   epic-7: done

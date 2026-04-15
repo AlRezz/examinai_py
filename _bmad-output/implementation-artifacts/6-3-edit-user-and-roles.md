@@ -1,6 +1,6 @@
 # Story 6.3: Edit user and roles
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -33,17 +33,17 @@ so that **roles and details stay current**.
 
 ## Tasks / Subtasks
 
-- [ ] **Repository** (AC: 1)  
-  - [ ] `update_user_with_roles`: email/enabled/optional password/roles; duplicate-email check; at least one role; self-edit cannot disable own account or strip own administrator role.
+- [x] **Repository** (AC: 1)  
+  - [x] `update_user_with_roles`: email/enabled/optional password/roles; duplicate-email check; at least one role; self-edit cannot disable own account or strip own administrator role.
 
-- [ ] **Routes** (AC: 1, 3)  
-  - [ ] `GET|POST /admin/users/{user_id}/edit` with CSRF on POST; flash + redirect on validation errors.
+- [x] **Routes** (AC: 1, 3)  
+  - [x] `GET|POST /admin/users/{user_id}/edit` with CSRF on POST; flash + redirect on validation errors.
 
-- [ ] **Templates** (AC: 2, 4)  
-  - [ ] Extend `admin/user-form.html` for edit (optional password, pre-filled fields); `admin/users/list.html` links to edit.
+- [x] **Templates** (AC: 2, 4)  
+  - [x] Extend `admin/user-form.html` for edit (optional password, pre-filled fields); `admin/users/list.html` links to edit.
 
-- [ ] **Tests**  
-  - [ ] Admin can edit user; non-admin denied; unknown user 404; duplicate email; CSRF; self-edit safeguards.
+- [x] **Tests**  
+  - [x] Admin can edit user; non-admin denied; unknown user 404; duplicate email; CSRF; self-edit safeguards.
 
 ## Dev Notes
 
@@ -66,10 +66,25 @@ Composer (Cursor agent)
 
 ### Completion Notes List
 
+- Added `update_user_with_roles` in `users_repo` (optional password change, role replacement, duplicate-email check excluding current user, at least one role, self-edit guards).
+- `admin_routes`: `GET|POST /admin/users/{user_id}/edit` with CSRF; 404 when user missing; success redirects to `/admin/users` with flash.
+- `admin/user-form.html` supports create and edit via `is_edit`, `selected_role_names`; list page **Edit** links.
+- Tests cover edit flow, 403/404, duplicate email, CSRF, password hash unchanged when password blank, self-demote/disabled blocked.
+
 ### File List
+
+- `src/examai/users_repo.py`
+- `src/examai/admin_routes.py`
+- `src/examai/templates/admin/user-form.html`
+- `src/examai/templates/admin/users/list.html`
+- `tests/test_admin_users.py`
+- `_bmad-output/implementation-artifacts/6-3-edit-user-and-roles.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ### Change Log
 
+- 2026-04-15: Implemented admin edit-user flow (Story 6.3).
+
 ---
 
-**Story completion status:** _In progress._
+**Story completion status:** Done (`done` in sprint-status).

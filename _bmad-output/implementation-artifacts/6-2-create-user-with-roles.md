@@ -1,6 +1,6 @@
 # Story 6.2: Create user with roles
 
-Status: review
+Status: done
 
 ## Story
 
@@ -81,4 +81,4 @@ Composer (Cursor agent)
 
 ---
 
-**Story completion status:** Ready for code review (`review` in sprint-status).
+**Story completion status:** Done (`done` in sprint-status).

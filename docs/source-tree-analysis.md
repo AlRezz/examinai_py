@@ -1,13 +1,13 @@
 # Source Tree Analysis
 
-**Repository layout:** The **Python** app lives at **`src/examai/`** with **`pyproject.toml`** at the repo root. The Spring Boot monolith remains as a **`JAVA_APP/`** snapshot (gitignored). **`docs/`**, BMAD folders, and **`.cursor/`** sit alongside.
+**Repository layout:** **Active code** is the **Python** package under **`src/examai/`** with **`pyproject.toml`** at the repo root. **`JAVA_APP/`** (if present) is **reference only** — optional read-only Spring Boot snapshot for **HTTP, Thymeleaf, Liquibase DDL, and integration** comparison; **no new product logic** there. **`docs/`**, BMAD folders, and **`.cursor/`** sit alongside.
 
 ```
 examinai_py/
 ├── pyproject.toml, README-Python.md
 ├── src/examai/                    # FastAPI app package (examai.main:app)
 ├── tests/                         # pytest (e.g. test_health.py)
-├── JAVA_APP/                      # Legacy Spring Boot (gitignored at repo root)
+├── JAVA_APP/                      # Optional reference snapshot (often gitignored)
 │   ├── pom.xml, mvnw, Dockerfile, docker-compose.yml, …
 │   └── src/main/java/com/examinai/app/ …
 ├── docs/
@@ -27,18 +27,18 @@ examinai_py/
 | `JAVA_APP/.../integration/git` | Legacy Git REST client. |
 | `JAVA_APP/.../domain/` | JPA entities (reference). |
 | `JAVA_APP/.../templates/` | Thymeleaf UI (reference for Jinja parity). |
-| `JAVA_APP/.../db/changelog/` | Liquibase migrations (canonical schema until Alembic owns it). |
+| `JAVA_APP/.../db/changelog/` | Liquibase YAML — **DDL reference** if snapshot exists; app schema authority: [data-models.md](./data-models.md) + Alembic. |
 
 ## Entry points
 
-- **Python:** `uvicorn examai.main:app` (default port 8080 in docs).
-- **Legacy Java:** `JAVA_APP/.../ExaminaiApplication.main` → embedded Tomcat.
-- **Operator:** `GET /actuator/health` — implemented in Python (`examai.main`) for compatibility.
+- **Python (primary):** `uvicorn examai.main:app` (default port 8080 in docs).
+- **Operator:** `GET /actuator/health` — Python app (`examai.main`) returns the **contract-documented** JSON shape.
+- **Reference — Java:** `JAVA_APP/.../ExaminaiApplication` only if you run the legacy snapshot for comparison.
 
 ## Tests
 
-- `tests/` — pytest + FastAPI `TestClient`.
-- `JAVA_APP/src/test/java/...` — legacy JUnit tests if editing Java.
+- **`tests/`** — **pytest** + FastAPI `TestClient` (when automated tests are in scope per PRD).
+- **`JAVA_APP/src/test/java/...`** — **reference** JUnit tests only if comparing the optional Java snapshot (not part of Python delivery).
 
 ---
 

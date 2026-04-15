@@ -16,7 +16,7 @@ pip install -e ".[dev]"
 uvicorn examai.main:app --reload --host 127.0.0.1 --port 8080
 ```
 
-Health (Spring-compatible path for operators):
+Health (contract path for operators):
 
 ```bash
 curl -sSf http://127.0.0.1:8080/actuator/health
@@ -25,5 +25,5 @@ curl -sSf http://127.0.0.1:8080/actuator/health
 ## Reference
 
 - HTTP contract: `docs/api-contracts.md`
-- Legacy app: `JAVA_APP/` (gitignored local snapshot)
+- Optional Spring snapshot: `JAVA_APP/` — **reference only** (often gitignored); use for parity with routes/templates/DDL, not for new features
 - Agent rules: `_bmad-output/project-context.md`

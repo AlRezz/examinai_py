@@ -1,5 +1,5 @@
 # Examinai documentation
 
-The **master index** for AI-oriented codebase documentation is **[index.md](./index.md)**.
+The **master index** is **[index.md](./index.md)** — written for the **Python (FastAPI)** stack as the active implementation. **`JAVA_APP/`** (if present) is **reference only** — routes, templates, DDL, integrations, Compose.
 
-Product and sprint traceability (PRD, epics, runbook pointers) may also be described under **`_bmad-output/planning-artifacts/`** when present. The legacy Spring Boot app’s operator readme lives in **`JAVA_APP/README.md`** (local snapshot; see root `.gitignore`).
+Product and sprint traceability may live under **`_bmad-output/planning-artifacts/`** when present. **`JAVA_APP/README.md`** is **reference** when the snapshot exists (often gitignored — see root `.gitignore`).

@@ -1,71 +1,81 @@
 # Technical Architecture — Examinai
 
+**Active stack:** Python (**FastAPI**, **Jinja2**, **SQLAlchemy 2**, **Uvicorn**) under `src/examai/`. **`JAVA_APP/`** (when present) is **reference only** — optional Spring Boot snapshot for comparing **routes, Thymeleaf templates, Liquibase DDL, and integration behavior**. **All new product work** is implemented in **`src/examai/`**; do not extend the Java tree for features.
+
 ## Executive summary
 
-Examinai is a **monolithic Spring Boot 3** application that delivers a **multi-role web product** for internship-style workflows: coordinators and administrators manage users and visibility; interns submit repository coordinates for assigned tasks; mentors review submissions, optionally **fetch normalized source** from a **Git provider API**, request **Ollama-backed AI draft assessments**, and **publish** structured feedback. The UI is **server-rendered HTML** (Thymeleaf) with **Bootstrap 5** and **jQuery** (WebJars).
+Examinai is a **monolithic server-rendered web application** for internship-style workflows: coordinators and administrators manage users; interns submit **repository coordinates** for assigned tasks; mentors **fetch normalized source** from a **Git provider API**, optionally request **Ollama-backed AI draft assessments**, and **publish** structured feedback. The **product behavior** is defined by **`docs/api-contracts.md`**; the **Python app** implements that surface with **Jinja2** templates and **integration modules** (Git, Ollama) isolated from route handlers.
 
-## Architecture pattern
+## Architecture pattern (Python)
 
-**Layered MVC monolith:**
+**Layered monolith (target):**
 
-1. **Web** — Spring `@Controller`, Thymeleaf views, form posts, flash attributes.
-2. **Service** — Application services (`*Service`) coordinate transactions and policies.
-3. **Domain / persistence** — JPA repositories, entities, UUID keys.
-4. **Integration** — `integration.ai` (Spring AI `ChatClient`, Ollama), `integration.git` (REST client to GitHub-compatible API).
+1. **Web** — FastAPI routers, Jinja2 responses, form posts, redirects/flash patterns as implemented.
+2. **Services** — Application services coordinate transactions and policies (mirror legacy `*Service` responsibilities).
+3. **Domain / persistence** — SQLAlchemy 2.x models and repositories; **UUID** keys aligned with [data-models.md](./data-models.md).
+4. **Integration** — `examai.integration` (or equivalent): **httpx** clients for Ollama and GitHub-compatible REST; explicit timeouts, errors, and degraded behavior.
 
-Cross-cutting: **Spring Security** (form login, session, role-based URL authorization), **validation**, **Actuator** health, **Liquibase** migrations.
+Cross-cutting: **session-based auth**, **role-gated routes** (documented URL rules; legacy snapshot optional for comparison), **`GET /actuator/health`**, **Alembic** (future sole owner of migrations) aligned with [data-models.md](./data-models.md); optional Liquibase files under **`JAVA_APP/`** are **DDL reference only** if a snapshot exists.
 
 ## Security model
 
-- **Authentication:** Form login at `/login`; sessions; logout at `/logout`.
-- **Authorization:** URL patterns in `SecurityConfig`:
-  - `/admin/**` → `ROLE_ADMINISTRATOR`
-  - `/review/**`, `/tasks/**` → `MENTOR` or `ADMINISTRATOR`
-  - `/intern/**` → `INTERN`
-  - `/coordinator/**` → `COORDINATOR`
-- **Post-login routing:** `RoleBasedAuthenticationSuccessHandler` sends users to role-appropriate home paths.
-- **Secrets:** Git token and DB credentials via environment (see README / `.env.example`).
+- **Authentication:** Form login at `/login`; session cookie; logout at `/logout` — **behavior** matches the legacy Spring Security layout; **implementation** is Python (e.g. itsdangerous/sessions per `project-context.md`).
+- **Authorization:** URL prefixes by role (see [api-contracts.md](./api-contracts.md)):
+  - `/admin/**` → administrator
+  - `/review/**`, `/tasks/**` → mentor or administrator
+  - `/intern/**` → intern
+  - `/coordinator/**` → coordinator
+- **Secrets:** Git token, DB URL/credentials, Ollama settings via **environment** — document names in [deployment-guide.md](./deployment-guide.md) and/or a repo **`.env.example`**; a **`JAVA_APP/.env.example`** (if the snapshot exists) may be used **only as a naming cross-reference**.
 
 ## Data architecture
 
-PostgreSQL with schema defined in Liquibase (`001` users/roles → `006` AI drafts). See [data-models.md](./data-models.md).
+**PostgreSQL.** Table definitions follow [data-models.md](./data-models.md) and evolve via **Alembic** when it owns migrations. **Liquibase** YAML under **`JAVA_APP/.../db/changelog/`** (if present) is **reference DDL only**, not part of the Python deployment path.
 
 ## AI and degraded behavior
 
-- **Inference:** Spring AI Ollama `ChatModel` + `ChatClient`; configurable timeouts, retries, character limits (`examinai.ai.draft-assessment.*`).
-- **Persistence:** Successful runs create `model_invocations` + `ai_drafts` rows (audit / FR19–FR20).
-- **UX:** `DegradedInferenceModelAdvice` can expose degraded state to mentor views when the LLM is unavailable (see product docs / runbook).
+- **Inference:** httpx (or async client) to Ollama; configurable timeouts, retries, and payload limits (mirror `examinai.ai.draft-assessment.*` semantics from legacy YAML where applicable).
+- **Persistence:** Successful runs create `model_invocations` + `ai_drafts` rows (audit).
+- **UX:** Mentor views surface **degraded** state when the LLM is unavailable (parity with legacy `DegradedInferenceModelAdvice` behavior).
 
 ## Git integration
 
-- **Client:** `GitSourceClient` using Spring 6 `RestClient`.
-- **Config:** `GIT_PROVIDER_BASE_URL`, `GIT_PROVIDER_TOKEN`; GitHub REST v3 semantics (commits, contents, diffs).
-- **Storage:** Fetched normalized text and state on `submissions` columns (Epic 3).
+- **Client:** httpx-based client to `GIT_PROVIDER_BASE_URL` (GitHub REST v3–compatible).
+- **Config:** `GIT_PROVIDER_BASE_URL`, `GIT_PROVIDER_TOKEN`.
+- **Storage:** Normalized text and fetch state on `submissions` columns as in schema docs.
 
 ## UI architecture
 
-- **Templates:** Thymeleaf under `templates/` with fragments (`fragments/head-bootstrap.html`, etc.).
-- **Static:** `/css`, `/js`; WebJars for Bootstrap and jQuery.
-- **No SPA:** All state changes via full page navigation or form POST.
+- **Templates:** **Jinja2** under `src/examai/` (layout grows with implementation); **parity** with legacy Thymeleaf names/paths where “same UI” is required.
+- **Static:** `/css`, `/js`, `/webjars/**` — mount **StaticFiles** / WebJar routes per [project-context.md](../_bmad-output/project-context.md).
+- **No SPA:** Full page navigation and form POST for core flows.
 
 ## Testing strategy
 
-- **Unit / slice:** Parser tests, property binding tests, WebMvc tests for controllers.
-- **Integration:** Spring Boot tests with Testcontainers PostgreSQL where applicable.
-- **Health:** Ollama health indicator optional (`EXAMINAI_LLM_HEALTH_PROBE_ENABLED`).
+- **pytest** under `tests/` when automated tests are in scope (see **`_bmad-output/planning-artifacts/prd/index.md`** for any phased deferral).
+- **Health:** `GET /actuator/health` for ops smoke.
 
 ## Deployment architecture
 
-- **Container:** Dockerfile produces a single JVM artifact; Compose stacks app + Postgres + Ollama (see [deployment-guide.md](./deployment-guide.md)).
-- **Profiles:** `dev`, `test`, `prod` YAML for environment-specific settings.
+- **Target:** Single container or process running **Uvicorn** + app, plus **PostgreSQL** and optional **Ollama** (three-service pilot topology). A **Python Dockerfile** at repo root is the long-term default. **`JAVA_APP/docker-compose.yml`** (if the snapshot exists) is **reference only** for compose wiring — see [deployment-guide.md](./deployment-guide.md).
+
+---
+
+## Reference: Spring Boot snapshot (`JAVA_APP/`)
+
+_Optional local snapshot — **not** the shipped solution. Use for **parity checks** (URLs, templates, schema DDL, integration patterns) only._
+
+- **Stack:** Spring Boot 3, Thymeleaf, Spring Security, Spring Data JPA, Spring AI (Ollama), Liquibase.
+- **Web:** `@Controller`, Thymeleaf views; `integration.ai` / `integration.git`; `SecurityConfig` URL rules; `RoleBasedAuthenticationSuccessHandler`.
+- **Tests:** JUnit, WebMvc, Testcontainers — under `JAVA_APP/src/test/java/` **only** if maintaining the snapshot for comparison (not part of Python CI).
+- **Operator detail (reference):** **`JAVA_APP/README.md`** when the tree is present.
 
 ## Related documents
 
 - [api-contracts.md](./api-contracts.md) — HTTP route catalog
-- [data-models.md](./data-models.md) — tables and entities
+- [data-models.md](./data-models.md) — tables and mapping
 - [source-tree-analysis.md](./source-tree-analysis.md) — directory map
-- **`JAVA_APP/README.md`** — legacy operator procedures (Java snapshot at repo root; gitignored)
+- [development-guide.md](./development-guide.md) — Python setup
 
 ---
 
-_Generated by BMAD `document-project` workflow._
+_Updated: Python as active stack; `JAVA_APP/` reference-only when present._

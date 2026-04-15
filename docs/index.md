@@ -1,8 +1,8 @@
 # Examinai — Project Documentation Index
 
-**Type:** Migration — **Python** app at repo root (`src/examai/`), legacy **Spring Boot** snapshot in **`JAVA_APP/`** (gitignored)  
-**Primary languages:** Python 3.9+ (target stack), Java 21 (legacy)  
-**Architecture:** Server-rendered web (Jinja2 / Thymeleaf) + PostgreSQL + Ollama  
+**Type:** Migration — **Python** is the **active** implementation (`src/examai/`). **`JAVA_APP/`** (if present) is a **legacy Spring Boot snapshot** (often gitignored) — **reference only** for routes, Thymeleaf templates, Liquibase DDL, integrations, and Compose wiring; **not** a second app to ship or extend for new features.  
+**Primary language:** **Python 3.9+**  
+**Architecture:** Server-rendered web (**Jinja2** target; **Thymeleaf** in reference tree) + PostgreSQL + Ollama  
 **Last updated:** 2026-04-15
 
 ## Project overview
@@ -13,31 +13,30 @@ Examinai coordinates **tasks**, **intern submissions** (repo coordinates + Git-b
 
 | Topic | Detail |
 |-------|--------|
-| Python stack | `pyproject.toml` — FastAPI, Jinja2, SQLAlchemy 2, Alembic, psycopg 3, httpx; package **`examai`** under `src/examai/` |
-| Legacy stack | Spring Boot 3.5, Thymeleaf, JPA, Liquibase — see **`JAVA_APP/`** |
-| Entry point | Python: `examai.main:app` (Uvicorn); Java: `ExaminaiApplication` in `JAVA_APP` |
-| HTTP port | 8080 (default) |
-| Health | `GET /actuator/health` |
-| Database | Canonical Liquibase: `JAVA_APP/.../db/changelog/`; Alembic TBD in Python |
+| **Python stack** | `pyproject.toml` — FastAPI, Jinja2, SQLAlchemy 2, Alembic, psycopg 3, httpx; package **`examai`** under `src/examai/` |
+| **Reference (Java)** | Spring Boot 3.5, Thymeleaf, JPA, Liquibase — **`JAVA_APP/`** only, **reference**; no new product work in Java |
+| **Entry point** | **`examai.main:app`** (Uvicorn) — default port **8080** |
+| **Health** | `GET /actuator/health` |
+| **Database** | **Tables:** [data-models.md](./data-models.md) + PostgreSQL; **Alembic** for forward migrations. **Liquibase** under **`JAVA_APP/`** (if snapshot exists) = **DDL reference only** |
 
 ## Generated documentation
 
 ### Core
 
-- [Project overview](./project-overview.md) — Summary and classification
-- [Architecture](./architecture.md) — Layers, security, integrations, deployment view
+- [Project overview](./project-overview.md) — Summary and classification (Python-first)
+- [Architecture](./architecture.md) — Active Python design + Java reference
 - [Source tree analysis](./source-tree-analysis.md) — Annotated directory layout
 
 ### Contracts and data
 
 - [API contracts](./api-contracts.md) — Browser HTTP routes and form actions (not a JSON REST API)
-- [Data models](./data-models.md) — Tables and entity mapping
+- [Data models](./data-models.md) — Tables and mapping
 
 ### UI and operations
 
-- [Component inventory](./component-inventory.md) — Thymeleaf templates and static assets
-- [Development guide](./development-guide.md) — Local setup, run, test
-- [Deployment guide](./deployment-guide.md) — Docker and Compose
+- [Component inventory](./component-inventory.md) — Jinja2 target + Thymeleaf reference paths
+- [Development guide](./development-guide.md) — Python setup, run, test
+- [Deployment guide](./deployment-guide.md) — Topology; Java Compose as reference
 
 ### Workflow state
 
@@ -47,25 +46,24 @@ Examinai coordinates **tasks**, **intern submissions** (repo coordinates + Git-b
 
 | Document | Description |
 |----------|-------------|
-| [JAVA_APP/README.md](../JAVA_APP/README.md) | Legacy Java app readme (local `JAVA_APP/` snapshot; gitignored) |
-| [_bmad-output/planning-artifacts/](../_bmad-output/planning-artifacts/) | PRD, architecture, epics, sprint status (if present) — linked from README |
+| [JAVA_APP/README.md](../JAVA_APP/README.md) | **Reference** — legacy operator readme (**only if** `JAVA_APP/` snapshot exists; often gitignored) |
+| [_bmad-output/planning-artifacts/](../_bmad-output/planning-artifacts/) | PRD, epics, sprint status (if present) |
 
 ## Getting started
 
-**Python (active development):** see **[README-Python.md](../README-Python.md)** — `pip install -e ".[dev]"`, then `uvicorn examai.main:app --reload --port 8080`.
+**Python (only path for new work):** **[README-Python.md](../README-Python.md)** — `pip install -e ".[dev]"`, then `uvicorn examai.main:app --reload --port 8080`.
 
-**Legacy Java:** install **JDK 21** and **Maven**, PostgreSQL, then from **`JAVA_APP/`** run `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` (see **`JAVA_APP/README.md`**).
+**Reference — legacy Java (optional):** JDK 21, Maven — **`JAVA_APP/README.md`** when the snapshot exists (parity checks only; not required for Python delivery).
 
-Full stack with LLM: **Docker Compose** from **`JAVA_APP/`** (see [deployment-guide.md](./deployment-guide.md)).
+**Compose / pilot topology:** Three services (app + Postgres + Ollama). **`JAVA_APP/docker-compose.yml`** is **reference** for wiring until a root-level Python Compose file exists — [deployment-guide.md](./deployment-guide.md).
 
 ## For AI-assisted development
 
-- **Brownfield PRD / features:** Point workflows at this **index** and at `_bmad-output/planning-artifacts/` for product traceability.
-- **UI changes:** Start from [component-inventory.md](./component-inventory.md) and `JAVA_APP/src/main/resources/templates/`.
-- **Backend / domain (Python):** `src/examai/`; **`_bmad-output/project-context.md`** for agent rules.
-- **Backend / domain (legacy):** [architecture.md](./architecture.md), [data-models.md](./data-models.md); Java under `JAVA_APP/.../service/` and `domain/`.
-- **Integrations (legacy paths):** `JAVA_APP/.../integration/ai` (Ollama), `integration/git` (Git provider REST) — mirror in Python as separate modules.
+- **Brownfield PRD / features:** This **index** + `_bmad-output/planning-artifacts/`.
+- **UI:** Implement under **`src/examai/`** (Jinja2); use [component-inventory.md](./component-inventory.md); **`JAVA_APP/.../templates/`** (if present) for **reference** naming/layout parity only.
+- **Backend / domain:** `src/examai/`; **`_bmad-output/project-context.md`** for agent rules.
+- **Integrations:** Implement in Python (`examai.integration.*`); **`JAVA_APP/.../integration/`** is **reference** for behavior and prompts.
 
 ---
 
-_Documentation generated by BMAD Method `document-project` workflow (initial_scan, deep)._
+_Documentation index: Python stack primary; `JAVA_APP/` reference-only when present._

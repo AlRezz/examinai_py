@@ -1,31 +1,33 @@
 # Deployment Guide — Examinai
 
+**Target stack:** **Python app** (Uvicorn) + **PostgreSQL** + **Ollama** — same three-service **pilot** topology as the product docs (FR32). **Implementation in this repo:** add a **Python Dockerfile / Compose** at the repo root when ready.
+
+**Reference only (`JAVA_APP/` — if the snapshot exists locally):** A **Spring Boot** image and **`JAVA_APP/docker-compose.yml`** may exist (build context **`JAVA_APP/`**). Use them to **validate compose wiring** (ports, env vars, Ollama pull behavior) — **not** the long-term production path; the Python image replaces the `app` service when ready.
+
 ## Topology
 
-The intended **pilot** stack (FR32) is **three services**: Spring Boot **app**, **PostgreSQL**, **Ollama**. Defined in **`JAVA_APP/docker-compose.yml`** (build context is **`JAVA_APP/`**).
+| Service | Active target | Reference (today) |
+|---------|----------------|-------------------|
+| App | **Python / Uvicorn** — port **8080** | JVM image from **`JAVA_APP/Dockerfile`** |
+| `db` | **PostgreSQL** (e.g. `postgres:16-alpine`) | Same in reference Compose |
+| `llm` | **Ollama** (`ollama/ollama`) | Same in reference Compose |
 
-| Service | Image / build | Default publish |
-|---------|----------------|-----------------|
-| `db` | `postgres:16-alpine` | 5432 |
-| `llm` | `ollama/ollama` (tag via `OLLAMA_IMAGE`) | 11434 |
-| `app` | Built from `Dockerfile` | 8080 |
+Reference file: **`JAVA_APP/docker-compose.yml`**.
 
-## Dockerfile
+## Dockerfile (reference — Java)
 
-- **Stage 1:** `eclipse-temurin:21-jdk-alpine` — runs `./mvnw package`, copies `app.jar`
-- **Stage 2:** `eclipse-temurin:21-jre-alpine` — non-root `spring` user, `curl` installed, exposes **8080**
+The checked-in multi-stage build uses **Temurin 21**, runs **`./mvnw package`**, and ships a **JAR**. **Do not treat this as the long-term production path** for new work—mirror the same **8080** health and env contract in the **Python** image when you add it.
 
 ## Compose environment
 
-Typical variables (see **`JAVA_APP/.env.example`**):
+Typical variables — document names in this guide and/or repo **`.env.example`**; **`JAVA_APP/.env.example`** (if present) may be used **only as a naming cross-reference**:
 
-- **`SPRING_PROFILES_ACTIVE`** — default `dev` under Compose
-- **`SPRING_DATASOURCE_*`** — point JDBC at service **`db`**
-- **`OLLAMA_BASE_URL`** — inside Compose use **`http://llm:11434`** (not `127.0.0.1`)
-- **`OLLAMA_MODEL`** — must match a pulled Ollama model
-- **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`** — for Git fetch in mentor flows
+- **Database** — JDBC-style `SPRING_DATASOURCE_*` in reference Java stack; Python should use equivalent **`DATABASE_URL`** / DSN once configured.
+- **`OLLAMA_BASE_URL`** — inside Compose use **`http://llm:11434`** (not `127.0.0.1`).
+- **`OLLAMA_MODEL`** — must match a pulled model on the `llm` service.
+- **`GIT_PROVIDER_BASE_URL`**, **`GIT_PROVIDER_TOKEN`** — for mentor Git fetch flows.
 
-The **`llm`** service entrypoint runs `ollama serve`, waits, then **`ollama pull`** for `OLLAMA_MODEL` (first run can take a long time).
+The **`llm`** service entrypoint in reference Compose may run **`ollama pull`** — first boot can take a long time.
 
 ## Health checks
 
@@ -33,22 +35,23 @@ The **`llm`** service entrypoint runs `ollama serve`, waits, then **`ollama pull
 curl -sSf http://localhost:8080/actuator/health
 ```
 
-Compose-level healthchecks in YAML may be commented out; enable as needed for orchestration.
+(Contract-documented JSON shape: `{"status":"UP"}` — keep for operator parity.)
 
 ## macOS Docker note
 
-**`JAVA_APP/README.md`** documents **Homebrew `docker`** vs **Docker Desktop** credential helper issues and a helper script **`JAVA_APP/scripts/docker-with-desktop-path.sh`**.
+When the snapshot exists, **`JAVA_APP/README.md`** documents **Homebrew `docker`** vs **Docker Desktop** credential issues and **`JAVA_APP/scripts/docker-with-desktop-path.sh`** — useful for any Compose workflow on macOS, including a future Python-based Compose file.
 
 ## Production considerations (high level)
 
-- Use **`prod`** profile and hardened secrets management (not dev defaults).
-- Disable Ollama auto-pull if images are pre-baked: `SPRING_AI_OLLAMA_INIT_PULL_MODEL_STRATEGY=never` (see **`JAVA_APP/README.md`**).
-- TLS termination and session hardening are environment-specific (not detailed in this scan).
+- Secrets management and **`prod`-style** settings—not dev defaults.
+- Ollama: control auto-pull vs pre-baked images per ops policy (legacy Java used `SPRING_AI_OLLAMA_INIT_PULL_MODEL_STRATEGY`; Python stack should expose an equivalent policy).
+- TLS termination and session hardening are environment-specific.
 
 ## Operator runbook
 
-See **`JAVA_APP/README.md`** (legacy Java tree) and any **`runbook-pilot.md`** under `docs/` if present for smoke paths and degraded LLM behavior.
+- **Python / FastAPI:** follow [development-guide.md](./development-guide.md) and [README-Python.md](../README-Python.md).
+- **Optional Java snapshot:** **`JAVA_APP/README.md`** (if present) — JVM runbook and degraded-LLM notes as **reference**.
 
 ---
 
-_Generated by BMAD `document-project` workflow._
+_Updated: Python stack as deployment target; Java Compose/Dockerfile as reference._

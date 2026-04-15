@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Tasks — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <a class="nav-link py-0" href="/home">Home</a>
+        <a class="btn btn-sm btn-primary" href="/tasks/new">New task</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <h1 class="h3 mb-3">Tasks</h1>
+    {% if flash %}
+    <div class="alert alert-info" role="alert">{{ flash }}</div>
+    {% endif %}
+    {% if tasks %}
+    <div class="table-responsive">
+      <table class="table table-sm table-striped align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Due</th>
+            <th scope="col">Updated</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tasks %}
+          <tr>
+            <td>{{ t.title }}</td>
+            <td>{% if t.due_date %}{{ t.due_date.isoformat() }}{% else %}—{% endif %}</td>
+            <td class="small text-muted">{{ t.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/tasks/{{ t.id }}/edit">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No tasks yet. <a href="/tasks/new">Create one</a>.</p>
+    {% endif %}
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

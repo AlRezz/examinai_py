@@ -1,6 +1,6 @@
 # Story 2.1: List, create, and edit tasks
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -36,20 +36,20 @@ so that **program work is defined in the system**.
 
 ## Tasks / Subtasks
 
-- [ ] **Persistence** (AC: 2, 3)  
-  - [ ] SQLAlchemy models for **`tasks`** (and session wiring) per **[docs/data-models.md](../../docs/data-models.md)**.  
-  - [ ] Service or repository helpers for list/create/update with typed IDs (**UUID**).
+- [x] **Persistence** (AC: 2, 3)  
+  - [x] SQLAlchemy models for **`tasks`** (and session wiring) per **[docs/data-models.md](../../docs/data-models.md)**.  
+  - [x] Service or repository helpers for list/create/update with typed IDs (**UUID**).
 
-- [ ] **Routes** (AC: 1–5)  
-  - [ ] Implement `GET /tasks`, `GET|POST /tasks/new`, `GET|POST /tasks/{id}/edit` per contract paths and methods.  
-  - [ ] Enforce **mentor or administrator** dependency on these routes (**FR5**).
+- [x] **Routes** (AC: 1–5)  
+  - [x] Implement `GET /tasks`, `GET|POST /tasks/new`, `GET|POST /tasks/{id}/edit` per contract paths and methods.  
+  - [x] Enforce **mentor or administrator** dependency on these routes (**FR5**).
 
-- [ ] **Templates** (AC: 1, 4)  
-  - [ ] `tasks/list.html`, `tasks/form.html`; shared layout/fragments per **UX-DR1–UX-DR2**.  
-  - [ ] Forms include **CSRF** per Epic 1 convention (**UX-DR9**) if mutating templates ship with this story.
+- [x] **Templates** (AC: 1, 4)  
+  - [x] `tasks/list.html`, `tasks/form.html`; shared layout/fragments per **UX-DR1–UX-DR2**.  
+  - [x] Forms include **CSRF** per Epic 1 convention (**UX-DR9**) if mutating templates ship with this story.
 
-- [ ] **Tests**  
-  - [ ] `TestClient` tests with authenticated mentor/admin fixture: list/create/edit happy path; forbidden for wrong role.
+- [x] **Tests**  
+  - [x] `TestClient` tests with authenticated mentor/admin fixture: list/create/edit happy path; forbidden for wrong role.
 
 ## Dev Notes
 
@@ -83,8 +83,26 @@ so that **program work is defined in the system**.
 
 ### Completion Notes List
 
+- Implemented `Task` ORM model (`tasks` table) and `tasks_repo` for list/create/update with UUID keys.
+- Added `tasks_routes` APIRouter: `GET/POST /tasks/new`, `GET/POST /tasks/{id}/edit`, `GET /tasks`; CSRF on POSTs, redirect-after-POST with session flash; 404 for unknown task on edit GET.
+- Templates: `templates/tasks/list.html`, `templates/tasks/form.html` with Bootstrap shell, CSRF fragment, logout.
+- Tests: `tests/test_tasks_crud.py` (mentor/admin happy paths, intern 403, CSRF rejection, validation, DB row check).
+
 ### File List
+
+- `src/examai/models.py`
+- `src/examai/tasks_repo.py`
+- `src/examai/tasks_routes.py`
+- `src/examai/main.py`
+- `src/examai/templates/tasks/list.html`
+- `src/examai/templates/tasks/form.html`
+- `tests/test_tasks_crud.py`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Change Log
+
+- 2026-04-15: Story 2.1 — task list/create/edit for mentor/admin, persistence, tests, sprint status → review.
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** review

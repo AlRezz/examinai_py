@@ -1,6 +1,6 @@
 # Story 1.1: Public pages, static assets, and WebJar UI stack
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -149,6 +149,11 @@ Composer (Cursor agent)
 - `pyproject.toml`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
+### Review Findings
+
+- [x] [Review][Patch] Add `/webjars/` smoke tests for jQuery and jQuery UI JS (stack parity with AC 2 and 4) — [`tests/test_public_shell.py`](../../tests/test_public_shell.py) (applied in code review 2026-04-15)
+- [x] [Review][Defer] `docs/api-contracts.md` lists `GET /actuator/health/**`, but the app only registers `GET /actuator/health` ([`src/examai/main.py`](../../src/examai/main.py)); probes to subpaths return 404 — acceptable for Story 1.1 per AC 5 (Story 1.2 owns extended health behavior)
+
 ---
 
-**Story completion status:** Implementation complete; ready for code review.
+**Story completion status:** Code review complete; story marked done.

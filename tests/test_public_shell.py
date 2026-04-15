@@ -32,6 +32,18 @@ def test_webjar_bootstrap_css() -> None:
     assert "text/css" in r.headers.get("content-type", "")
 
 
+def test_webjar_jquery_js() -> None:
+    r = client.get("/webjars/jquery/3.7.1/jquery.min.js")
+    assert r.status_code == 200
+    assert "javascript" in r.headers.get("content-type", "").lower()
+
+
+def test_webjar_jquery_ui_js() -> None:
+    r = client.get("/webjars/jquery-ui/1.13.2/jquery-ui.min.js")
+    assert r.status_code == 200
+    assert "javascript" in r.headers.get("content-type", "").lower()
+
+
 def test_js_welcome_init() -> None:
     r = client.get("/js/welcome-jqui-init.js")
     assert r.status_code == 200

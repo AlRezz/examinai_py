@@ -22,6 +22,7 @@ inputDocuments:
 scope_note: >-
   Functional requirements, UX design requirements, implementation tasks, epic list,
   coverage maps, and user stories. NFR inventory omitted unless added later.
+  Epic 8 (Docker, DB seed, Liquibase, README-Python) added 2026-04-15 as a supplement.
 ---
 
 # examinai_py — Functional Requirements, UX Design Requirements, and Tasks
@@ -596,6 +597,108 @@ So that **I can spot stuck work without mentor tools**.
 
 ---
 
+## Epic 8: Containerized runtime, database bootstrap, and README operations
+
+**Theme:** Ship **Dockerfile(s)** and **Docker Compose** so operators can run the **application**, **PostgreSQL**, and **LLM (e.g. Ollama)** consistently; **seed** an initial **administrator** via DB init scripts; run **Liquibase** migrations on application startup; and extend **`README-Python.md`** with accurate **run instructions** and **user-flow** summaries for every role.
+
+**Suggested sequence:** Implement **8.1 → 8.2 → 8.3** first (stack + data). Then **8.4–8.6** (README aligned with compose service names and ports). Finish with **8.7** (user flows) so routes and roles match the running product.
+
+### Story 8.1: Dockerfiles and Docker Compose for app, database, and LLM
+
+As an **operator or developer**,  
+I want **Dockerfile(s) and a `docker-compose` definition** that run the FastAPI app, PostgreSQL, and the LLM service,  
+So that **I can reproduce the full stack locally or in a lab without manual installs**.
+
+**Acceptance Criteria:**
+
+**Given** the repository contains the new container definitions  
+**When** I follow the compose file’s documented prerequisites (e.g. `.env` variables)  
+**Then** I can build images and start **application**, **database**, and **LLM** services with **named services** and **stable ports** suitable for README cross-links  
+**And** the app container receives configuration for DB host and LLM base URL via environment variables consistent with **`docs/deployment-guide.md`** / architecture  
+**And** volumes or bind mounts are defined where needed for persistence (e.g. Postgres data, optional Ollama models path if applicable)
+
+### Story 8.2: Database init scripts with administrator seed
+
+As an **operator**,  
+I want **SQL (or scripted) init** that creates baseline schema expectations and an **initial administrator account**,  
+So that **a fresh database container is usable for first login without manual SQL**.
+
+**Acceptance Criteria:**
+
+**Given** Postgres starts with an init hook (e.g. `docker-entrypoint-initdb.d`) or documented equivalent  
+**When** the init runs on an **empty** data directory  
+**Then** required roles/users/tables expected by the app exist or are compatible with **Liquibase** baseline (no conflicting duplicate DDL if Liquibase owns schema)  
+**And** at least one **administrator** user exists with credentials sourced from **secrets/env** (not hard-coded in repo), documented for operators  
+**And** init is **idempotent** or clearly scoped so re-apply behavior is documented
+
+### Story 8.3: Liquibase migrations on application startup
+
+As an **operator**,  
+I want **Liquibase to apply changelogs when the application starts**,  
+So that **schema stays aligned with code in every environment that runs the container**.
+
+**Acceptance Criteria:**
+
+**Given** the app image starts with database reachable  
+**When** the process boots (entrypoint or application main)  
+**Then** Liquibase runs against the configured database URL (per project tooling) and applies pending changes  
+**And** startup **fails fast** with a clear log message if migration fails (no silent partial state)  
+**And** interaction with **Story 8.2** init is defined (e.g. baseline vs. seed-only) to avoid duplicate or conflicting DDL
+
+### Story 8.4: README-Python — run the application as a Docker image
+
+As a **developer**,  
+I want **`README-Python.md` to explain how to build and run the application container**,  
+So that **I can start the server from Docker without guessing compose service names or ports**.
+
+**Acceptance Criteria:**
+
+**Given** **Story 8.1** compose/service names exist  
+**When** I read **`README-Python.md`**  
+**Then** I find **build** and **run** commands (or compose targets) for the **application** image, environment variables, and health check URL (e.g. **`GET /actuator/health`**)  
+**And** the steps match the actual **`Dockerfile`/compose** in the repo
+
+### Story 8.5: README-Python — run the database as a Docker image
+
+As a **developer**,  
+I want **`README-Python.md` to document running PostgreSQL via Docker**,  
+So that **I can run or troubleshoot the DB in isolation or understand compose networking**.
+
+**Acceptance Criteria:**
+
+**Given** **Story 8.1** defines the DB service  
+**When** I read **`README-Python.md`**  
+**Then** I see how to start the **database** container (standalone or via compose), connection parameters, volume/persistence notes, and how the app connects  
+**And** **Story 8.2** seed/admin assumptions are referenced or summarized where relevant
+
+### Story 8.6: README-Python — run the LLM as a Docker image
+
+As a **developer**,  
+I want **`README-Python.md` to document running the LLM (e.g. Ollama) in Docker**,  
+So that **AI draft features can be enabled consistently with deployment architecture**.
+
+**Acceptance Criteria:**
+
+**Given** **Story 8.1** defines the LLM service  
+**When** I read **`README-Python.md`**  
+**Then** I see how to run the **LLM** image, required **model pull** or mount steps, ports, and the **environment variables** the app uses to reach the LLM  
+**And** behavior matches **FR31–FR32** / degraded-LLM expectations at a high level (point to **`docs/`** for detail if needed)
+
+### Story 8.7: README-Python — user flows for all user types
+
+As a **new contributor or operator**,  
+I want **`README-Python.md` to summarize user flows by role**,  
+So that **I can sanity-check intern, mentor, coordinator, and administrator journeys after bringing the stack up**.
+
+**Acceptance Criteria:**
+
+**Given** the product’s roles (**FR4–FR5**, **FR7–FR27**)  
+**When** I read **`README-Python.md`**  
+**Then** I see a concise **user-flow** section covering **intern**, **mentor (or administrator on mentor routes)**, **coordinator**, and **administrator**, with **representative URLs or navigation** (aligned with **`docs/api-contracts.md`** / epics)  
+**And** flows are accurate for the current release (no obsolete routes)
+
+---
+
 ## Non-functional requirements
 
 _NFR inventory not populated in this document scope; add under a future pass if needed._
@@ -604,4 +707,4 @@ _NFR inventory not populated in this document scope; add under a future pass if 
 
 ## BMAD workflow — Create Epics and Stories
 
-**Status:** Complete. Requirements inventory, epic list, coverage maps, and user stories are recorded above; final validation was accepted on **2026-04-15**. This artifact is ready to feed **implementation readiness**, **sprint planning**, and **per-story development**.
+**Status:** Complete for the original PRD-aligned backlog; **Epic 8** (containerized runtime and README) was added as a **2026-04-15** supplement. Requirements inventory, epic list, coverage maps, and user stories are recorded above; this artifact feeds **implementation readiness**, **sprint planning**, and **per-story development**.

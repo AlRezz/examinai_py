@@ -1,5 +1,5 @@
 # generated: 2026-04-15T16:00:00Z
-# last_updated: 2026-04-15T16:00:00Z
+# last_updated: 2026-04-15T20:00:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T16:00:00Z"
-last_updated: "2026-04-15T16:00:00Z"
+last_updated: "2026-04-15T20:00:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -85,3 +85,13 @@ development_status:
   epic-7: done
   7-1-coordinator-index-and-case-record: done
   epic-7-retrospective: optional
+
+  epic-8: in-progress
+  8-1-dockerfiles-and-docker-compose-for-app-database-and-llm: ready-for-dev
+  8-2-database-init-scripts-with-administrator-seed: backlog
+  8-3-liquibase-migrations-on-application-startup: backlog
+  8-4-readme-python-run-the-application-as-a-docker-image: backlog
+  8-5-readme-python-run-the-database-as-a-docker-image: backlog
+  8-6-readme-python-run-the-llm-as-a-docker-image: backlog
+  8-7-readme-python-user-flows-for-all-user-types: backlog
+  epic-8-retrospective: optional

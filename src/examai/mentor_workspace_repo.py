@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from examai.models import (
@@ -15,6 +15,7 @@ from examai.models import (
     ModelInvocation,
     PublishedReview,
     Submission,
+    Task,
     TaskAssignment,
     User,
 )
@@ -24,6 +25,48 @@ from examai.models import (
 class InternSubmissionRow:
     intern: User
     submission: Submission | None
+
+
+@dataclass(frozen=True)
+class ReviewQueueRow:
+    """One assigned (task, intern) pair that does not yet have a published review."""
+
+    task: Task
+    intern: User
+    submission: Submission | None
+    has_draft: bool
+
+
+def list_outstanding_review_queue(session: Session) -> list[ReviewQueueRow]:
+    """Assigned pairs with no published review (FR24): awaiting submission or in-progress review."""
+    stmt = (
+        select(Task, User, Submission, MentorReviewDraft)
+        .select_from(TaskAssignment)
+        .join(Task, Task.id == TaskAssignment.task_id)
+        .join(User, User.id == TaskAssignment.intern_user_id)
+        .outerjoin(
+            Submission,
+            and_(
+                Submission.task_id == TaskAssignment.task_id,
+                Submission.intern_user_id == TaskAssignment.intern_user_id,
+            ),
+        )
+        .outerjoin(PublishedReview, PublishedReview.submission_id == Submission.id)
+        .outerjoin(MentorReviewDraft, MentorReviewDraft.submission_id == Submission.id)
+        .where(PublishedReview.id.is_(None))
+        .order_by(Task.title.asc(), User.email.asc())
+    )
+    out: list[ReviewQueueRow] = []
+    for task, intern, sub, draft in session.execute(stmt).all():
+        out.append(
+            ReviewQueueRow(
+                task=task,
+                intern=intern,
+                submission=sub,
+                has_draft=draft is not None,
+            )
+        )
+    return out
 
 
 def list_intern_submissions_for_task(session: Session, task_id: uuid.UUID) -> list[InternSubmissionRow]:

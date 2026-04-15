@@ -28,6 +28,7 @@ from examai.mentor_workspace_repo import (
     get_submission_for_pair,
     intern_assigned_to_task,
     list_intern_submissions_for_task,
+    list_outstanding_review_queue,
     upsert_mentor_review_draft,
     upsert_published_review,
 )
@@ -108,6 +109,25 @@ def _parse_score(raw: str) -> Optional[int]:
 
 def _redirect_workspace(task_id: uuid.UUID, intern_id: uuid.UUID) -> str:
     return f"/tasks/{task_id}/submissions/{intern_id}"
+
+
+@router.get("/review/queue", response_class=HTMLResponse)
+def review_queue(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    """GET /review/queue — FR24, UX-DR1 (`review/queue.html`)."""
+    user = _current_user(request, db)
+    csrf_token = get_or_create_csrf(request.session)
+    flash = request.session.pop("_flash", None)
+    rows = list_outstanding_review_queue(db)
+    return templates.TemplateResponse(
+        request,
+        "review/queue.html",
+        {
+            "user": user,
+            "csrf_token": csrf_token,
+            "flash": flash,
+            "rows": rows,
+        },
+    )
 
 
 @router.get("/tasks/{task_id}/submissions", response_class=HTMLResponse)

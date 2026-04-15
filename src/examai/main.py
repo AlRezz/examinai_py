@@ -159,11 +159,6 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             {"user": user, "csrf_token": csrf_token},
         )
 
-    # Role-space smoke routes (Story 1.4) — minimal placeholders until epics 2–7 flesh them out.
-    @app.get("/review/queue", response_class=HTMLResponse)
-    def review_queue_placeholder(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse(request, "spaces/review-queue.html")
-
     @app.get("/error", response_class=HTMLResponse)
     def error_page(
         request: Request,

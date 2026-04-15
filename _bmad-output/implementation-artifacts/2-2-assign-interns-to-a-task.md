@@ -1,6 +1,6 @@
 # Story 2.2: Assign interns to a task
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -67,9 +67,9 @@ so that **interns see the right assignments**.
 ### Completion Notes List
 
 - Added **`TaskAssignment`** ORM model and **`task_assignments`** table; **`list_users_with_role`** on **`users_repo`**; **`task_assignments_repo`** for read/replace assignments.
-- **`GET|POST /tasks/{task_id}/assignments`**: CSRF + redirect/flash; POST parses `intern_id` from form (supports empty selection); rejects non-intern user ids; async POST for reliable multipart/urlencoded duplicate keys.
+- **`GET|POST /tasks/{task_id}/assignments`**: CSRF + redirect/flash; POST parses `intern_id` from form (supports empty selection); rejects non-intern user ids; invalid UUID strings flash and redirect (CR 2-2); async POST for reliable multipart/urlencoded duplicate keys.
 - Template **`tasks/assign.html`**; task list **Assign** link beside **Edit**.
-- Tests: **`tests/test_task_assignments.py`** (persist, clear, RBAC, validation, 404, list link).
+- Tests: **`tests/test_task_assignments.py`** (persist, clear, RBAC, validation, malformed id, admin save, 404, list link).
 
 ### File List
 
@@ -86,7 +86,8 @@ so that **interns see the right assignments**.
 ### Change Log
 
 - 2026-04-15: Story 2.2 — task intern assignments UI, persistence, tests; sprint status → review.
+- 2026-04-16: CR 2-2 — POST rejects malformed `intern_id` with flash (no 500); tests for admin save + malformed id; story → done.
 
 ---
 
-**Story completion status:** review
+**Story completion status:** done

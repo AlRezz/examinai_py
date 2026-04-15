@@ -144,6 +144,63 @@ def test_assignments_intern_forbidden(client: TestClient) -> None:
     assert client.get(f"/tasks/{task_id}/assignments").status_code == 403
 
 
+def test_assignments_admin_can_save(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("admin-assign@example.com", "secret", "administrator")
+    intern_id = _seed_user("intern-admin@example.com", "secret", "intern")
+    task_id = _seed_task("Admin assigns")
+
+    login_with_password(client, "admin-assign@example.com", "secret")
+    r_get = client.get(f"/tasks/{task_id}/assignments")
+    assert r_get.status_code == 200
+    csrf = extract_csrf(r_get.text)
+    body = urlencode([("csrf_token", csrf), ("intern_id", str(intern_id))])
+    r_post = client.post(
+        f"/tasks/{task_id}/assignments",
+        content=body,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        follow_redirects=False,
+    )
+    assert r_post.status_code == 303
+    db = get_session_factory()()
+    try:
+        rows = db.execute(
+            select(TaskAssignment).where(TaskAssignment.task_id == task_id)
+        ).scalars().all()
+        assert len(rows) == 1
+        assert rows[0].intern_user_id == intern_id
+    finally:
+        db.close()
+
+
+def test_assignments_rejects_malformed_intern_id(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("mentor-malform@example.com", "secret", "mentor")
+    task_id = _seed_task("Tamper")
+
+    login_with_password(client, "mentor-malform@example.com", "secret")
+    r = client.get(f"/tasks/{task_id}/assignments")
+    csrf = extract_csrf(r.text)
+    body = urlencode([("csrf_token", csrf), ("intern_id", "not-a-uuid")])
+    r_post = client.post(
+        f"/tasks/{task_id}/assignments",
+        content=body,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        follow_redirects=False,
+    )
+    assert r_post.status_code == 303
+    r2 = client.get(f"/tasks/{task_id}/assignments")
+    assert "Invalid selection" in r2.text
+    db = get_session_factory()()
+    try:
+        rows = db.execute(
+            select(TaskAssignment).where(TaskAssignment.task_id == task_id)
+        ).scalars().all()
+        assert len(rows) == 0
+    finally:
+        db.close()
+
+
 def test_assignments_rejects_non_intern_id(client: TestClient) -> None:
     trigger_lifespan(client)
     _seed_user("mentor-bad@example.com", "secret", "mentor")

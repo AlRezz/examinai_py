@@ -239,8 +239,16 @@ async def task_assignments_post(
     raw_ids = form.getlist("intern_id")
     selected: list[uuid.UUID] = []
     for item in raw_ids:
-        if isinstance(item, str):
-            selected.append(uuid.UUID(item))
+        if not isinstance(item, str):
+            continue
+        s = item.strip()
+        if not s:
+            continue
+        try:
+            selected.append(uuid.UUID(s))
+        except ValueError:
+            request.session["_flash"] = "Invalid selection. Use only the intern checkboxes on this page."
+            return RedirectResponse(url=f"/tasks/{task_id}/assignments", status_code=303)
     allowed = {u.id for u in list_users_with_role(db, ROLE_INTERN)}
     invalid = [i for i in selected if i not in allowed]
     if invalid:

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Home — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <a class="nav-link py-0" href="/app/secure">Secure page</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <h1 class="h3 mb-3">Home</h1>
+    <p class="text-muted mb-4">You are signed in. Role-gated areas are linked below for smoke checks.</p>
+    <ul class="list-unstyled">
+      <li><a href="/intern/tasks">Intern — tasks</a></li>
+      <li><a href="/coordinator">Coordinator</a></li>
+      <li><a href="/tasks">Tasks (mentor/admin)</a></li>
+      <li><a href="/review/queue">Review queue</a></li>
+      <li><a href="/admin/users">Admin — users</a></li>
+    </ul>
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

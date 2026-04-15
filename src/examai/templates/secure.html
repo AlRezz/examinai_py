@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Secure — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        <a class="nav-link py-0" href="/home">Home</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <h1 class="h3 mb-3">Secure smoke page</h1>
+    <p class="mb-0">Authenticated-only route (<code>GET /app/secure</code>).</p>
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

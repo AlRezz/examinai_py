@@ -7,7 +7,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.templating import Jinja2Templates
@@ -22,6 +22,9 @@ _ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 
 router = APIRouter()
+
+# Matches `Task.title` (String(500)) and `tasks/form.html` maxlength.
+_TITLE_MAX_LEN = 500
 
 
 def _parse_optional_date(raw: Optional[str]) -> Tuple[Optional[date], Optional[str]]:
@@ -39,8 +42,9 @@ def _parse_optional_date(raw: Optional[str]) -> Tuple[Optional[date], Optional[s
 
 def _current_user(request: Request, db: Session):
     uid = request.session.get(SESSION_USER_KEY)
-    assert uid
-    return get_user_by_id(db, uuid.UUID(str(uid)))
+    if not uid or not isinstance(uid, str):
+        raise HTTPException(status_code=401)
+    return get_user_by_id(db, uuid.UUID(uid))
 
 
 @router.get("/tasks", response_class=HTMLResponse)
@@ -98,6 +102,9 @@ def task_new_post(
     title_clean = title.strip()
     if not title_clean:
         request.session["_flash"] = "Title is required."
+        return RedirectResponse(url="/tasks/new", status_code=303)
+    if len(title_clean) > _TITLE_MAX_LEN:
+        request.session["_flash"] = f"Title must be at most {_TITLE_MAX_LEN} characters."
         return RedirectResponse(url="/tasks/new", status_code=303)
     due_parsed, err = _parse_optional_date(due_date)
     if err:
@@ -164,6 +171,9 @@ def task_edit_post(
     title_clean = title.strip()
     if not title_clean:
         request.session["_flash"] = "Title is required."
+        return RedirectResponse(url=f"/tasks/{task_id}/edit", status_code=303)
+    if len(title_clean) > _TITLE_MAX_LEN:
+        request.session["_flash"] = f"Title must be at most {_TITLE_MAX_LEN} characters."
         return RedirectResponse(url=f"/tasks/{task_id}/edit", status_code=303)
     due_parsed, err = _parse_optional_date(due_date)
     if err:

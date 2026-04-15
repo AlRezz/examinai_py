@@ -1,6 +1,6 @@
 # Story 2.1: List, create, and edit tasks
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -87,6 +87,7 @@ so that **program work is defined in the system**.
 - Added `tasks_routes` APIRouter: `GET/POST /tasks/new`, `GET/POST /tasks/{id}/edit`, `GET /tasks`; CSRF on POSTs, redirect-after-POST with session flash; 404 for unknown task on edit GET.
 - Templates: `templates/tasks/list.html`, `templates/tasks/form.html` with Bootstrap shell, CSRF fragment, logout.
 - Tests: `tests/test_tasks_crud.py` (mentor/admin happy paths, intern 403, CSRF rejection, validation, DB row check).
+- Post–CR 2-1: `_current_user` raises `HTTPException(401)` if session user id missing; POST handlers reject titles over 500 characters; `test_tasks_validation_title_too_long` added.
 
 ### File List
 
@@ -102,7 +103,15 @@ so that **program work is defined in the system**.
 ### Change Log
 
 - 2026-04-15: Story 2.1 — task list/create/edit for mentor/admin, persistence, tests, sprint status → review.
+- 2026-04-15: Code review (CR 2-1) — findings recorded; status → in-progress until patch items closed.
+- 2026-04-15: CR 2-1 patch items applied (`_current_user` guard, title max length + test); story → done.
+
+### Review Findings
+
+- [x] [Review][Patch] Replace `assert uid` in `_current_user` with an explicit session guard (avoid relying on `assert`, which is stripped under `python -O`) — [`tasks_routes.py`](../../src/examai/tasks_routes.py) — fixed
+- [x] [Review][Patch] Enforce `title` length ≤ 500 on create/edit POST handlers to match `Task.title` and the form’s `maxlength` — [`tasks_routes.py`](../../src/examai/tasks_routes.py) — fixed
+- [x] [Review][Defer] GET `/tasks/{id}/edit` with a non-UUID `id` returns 422 (validation) instead of the HTML error shell used for unknown tasks — optional UX consistency; deferred
 
 ---
 
-**Story completion status:** review
+**Story completion status:** done

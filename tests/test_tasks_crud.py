@@ -156,6 +156,33 @@ def test_tasks_edit_not_found(client: TestClient) -> None:
     assert r.status_code == 404
 
 
+def test_tasks_validation_title_too_long(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("mentor-long@example.com", "secret", "mentor")
+    login_with_password(client, "mentor-long@example.com", "secret")
+
+    r_new = client.get("/tasks/new")
+    csrf = extract_csrf(r_new.text)
+    long_title = "x" * 501
+    r = client.post(
+        "/tasks/new",
+        data={
+            "csrf_token": csrf,
+            "title": long_title,
+            "description": "",
+            "due_date": "",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    assert r.headers.get("location") == "/tasks/new"
+    r_form = client.get("/tasks/new")
+    assert r_form.status_code == 200
+    assert "500 characters" in r_form.text
+    listed = client.get("/tasks")
+    assert long_title not in listed.text
+
+
 def test_tasks_validation_empty_title(client: TestClient) -> None:
     trigger_lifespan(client)
     _seed_user("mentor-val@example.com", "secret", "mentor")

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Table, Column, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Table, Column, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
 
@@ -98,4 +98,37 @@ class TaskAssignment(Base):
     )
 
 
-__all__ = ["Base", "User", "Role", "user_roles", "Task", "TaskAssignment"]
+class Submission(Base):
+    """One row per (task, intern) pair — docs/data-models.md."""
+
+    __tablename__ = "submissions"
+    __table_args__ = (
+        UniqueConstraint("task_id", "intern_user_id", name="uq_submissions_task_intern"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    intern_user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    repo_identifier: Mapped[str] = mapped_column(String(500), nullable=False)
+    commit_sha: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    path_scope: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="pending")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, onupdate=_utc_now, nullable=False
+    )
+
+
+__all__ = ["Base", "User", "Role", "user_roles", "Task", "TaskAssignment", "Submission"]

@@ -1,6 +1,6 @@
 # Story 7.1: Coordinator index and case record
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,17 +33,17 @@ so that **I can spot stuck work without mentor tools**.
 
 ## Tasks / Subtasks
 
-- [ ] **Routes** (AC: 1, 2, 4)  
-  - [ ] `GET /coordinator`, `GET /coordinator/cases/{submissionId}` with **coordinator-only** dependency.
+- [x] **Routes** (AC: 1, 2, 4)  
+  - [x] `GET /coordinator`, `GET /coordinator/cases/{submissionId}` with **coordinator-only** dependency.
 
-- [ ] **Queries** (AC: 1, 2, 5)  
-  - [ ] Index query across submissions (and joins as needed); single submission case record with task/intern context.
+- [x] **Queries** (AC: 1, 2, 5)  
+  - [x] Index query across submissions (and joins as needed); single submission case record with task/intern context.
 
-- [ ] **Templates** (AC: 3)  
-  - [ ] `coordinator/index.html`, `coordinator/case-record.html`.
+- [x] **Templates** (AC: 3)  
+  - [x] `coordinator/index.html`, `coordinator/case-record.html`.
 
-- [ ] **Tests**  
-  - [ ] Coordinator can access both routes; non-coordinator denied; invalid `submissionId` handled safely.
+- [x] **Tests**  
+  - [x] Coordinator can access both routes; non-coordinator denied; invalid `submissionId` handled safely.
 
 ## Dev Notes
 
@@ -65,14 +65,33 @@ so that **I can spot stuck work without mentor tools**.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor agent (implementation session)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Added SQLAlchemy `Submission` model (`submissions` table) per data-models (unique task+intern pair, repo/status fields).
+- New `coordinator_repo` list + case lookups joining `submissions`, `tasks`, `users`.
+- `coordinator_routes` serves Jinja templates under `coordinator/`; removed obsolete `spaces/coordinator-index.html` placeholder.
+- Tests cover coordinator success paths, mentor/intern 403 on `/coordinator`, 404 missing case, 422 invalid UUID path.
+
 ### File List
+
+- `src/examai/models.py`
+- `src/examai/coordinator_repo.py`
+- `src/examai/coordinator_routes.py`
+- `src/examai/main.py`
+- `src/examai/templates/coordinator/index.html`
+- `src/examai/templates/coordinator/case-record.html`
+- `tests/test_coordinator.py`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (story status)
+- `src/examai/templates/spaces/coordinator-index.html` (deleted)
+
+## Change Log
+
+- 2026-04-16: Implemented coordinator index and case record (Story 7.1); submission model + integration tests.
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** Implementation complete; **review**.

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Case — {{ task.title }} — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <span class="badge text-bg-secondary">Coordinator</span>
+        <a class="nav-link py-0" href="/coordinator">Overview</a>
+        <a class="nav-link py-0" href="/home">Home</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <h1 class="h3 mb-3">Case record</h1>
+    <div class="card mb-3">
+      <div class="card-body">
+        <h2 class="h5 card-title">{{ task.title }}</h2>
+        {% if task.description %}
+        <p class="card-text small text-muted">{{ task.description }}</p>
+        {% endif %}
+        <p class="small mb-1"><strong>Due:</strong> {% if task.due_date %}{{ task.due_date.isoformat() }}{% else %}—{% endif %}</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Submission</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-sm-3">Intern</dt>
+          <dd class="col-sm-9">{{ intern.email }}</dd>
+          <dt class="col-sm-3">Status</dt>
+          <dd class="col-sm-9"><span class="badge text-bg-light border">{{ submission.status }}</span></dd>
+          <dt class="col-sm-3">Repository</dt>
+          <dd class="col-sm-9 text-break">{{ submission.repo_identifier }}</dd>
+          <dt class="col-sm-3">Commit</dt>
+          <dd class="col-sm-9">{% if submission.commit_sha %}{{ submission.commit_sha }}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-3">Path scope</dt>
+          <dd class="col-sm-9 text-break">{% if submission.path_scope %}{{ submission.path_scope }}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-3">Updated</dt>
+          <dd class="col-sm-9 text-muted">{{ submission.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd>
+        </dl>
+      </div>
+    </div>
+    <p class="text-muted small mt-3 mb-0">This view is read-only. Mentor review actions are not available here.</p>
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

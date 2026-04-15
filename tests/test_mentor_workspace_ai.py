@@ -13,7 +13,7 @@ from examai.bootstrap import ensure_roles
 from examai.database import get_session_factory
 from examai.integration.ai import OllamaClientError
 from examai.integration.git_provider import GitFetchResult
-from examai.models import AiDraft, ModelInvocation, PublishedReview, Submission, Task, User
+from examai.models import AiDraft, MentorReviewDraft, ModelInvocation, PublishedReview, Submission, Task, User
 from examai.security import hash_password
 
 from tests.conftest import extract_csrf, login_with_password, trigger_lifespan
@@ -246,6 +246,44 @@ def test_manual_review_save_works_without_ai(client: TestClient, test_settings) 
 
     page2 = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
     assert "Good work on structure." in page2.text
+
+
+def test_review_draft_post_persists_mentor_review_drafts_row(client: TestClient, test_settings) -> None:
+    """Story 4.4: POST .../review-draft persists mentor_review_drafts per data-models."""
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="mw-mentor44@example.com",
+        intern_email="mw-intern44@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+
+    patched = replace(test_settings, ollama_base_url="")
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+        csrf = extract_csrf(page.text)
+        r = client.post(
+            f"/tasks/{task_id}/submissions/{intern_id}/review-draft",
+            data={
+                "csrf_token": csrf,
+                "quality_score": "4",
+                "readability_score": "3",
+                "correctness_score": "5",
+                "narrative_feedback": "Iterate before publish.",
+            },
+            follow_redirects=False,
+        )
+        assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        row = db.execute(select(MentorReviewDraft).where(MentorReviewDraft.submission_id == sub_id)).scalar_one()
+        assert row.quality_score == 4
+        assert row.readability_score == 3
+        assert row.correctness_score == 5
+        assert row.narrative_feedback == "Iterate before publish."
+        assert row.mentor_user_id == mentor.id
+    finally:
+        db.close()
 
 
 def test_ai_draft_post_ollama_error_no_audit_rows_and_banner(client: TestClient, test_settings) -> None:

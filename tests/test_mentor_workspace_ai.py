@@ -91,6 +91,44 @@ def test_submissions_list_and_workspace_renders(client: TestClient) -> None:
     assert "AI draft" in ws.text
 
 
+def test_intern_forbidden_on_mentor_submissions_routes(client: TestClient) -> None:
+    """Story 4.1 AC4: /tasks/** is mentor or administrator only (FR5)."""
+    trigger_lifespan(client)
+    _seed_user("mw-intern-rbac@example.com", "secret", "intern")
+    login_with_password(client, "mw-intern-rbac@example.com", "secret")
+    tid, iid = uuid.uuid4(), uuid.uuid4()
+    assert client.get(f"/tasks/{tid}/submissions").status_code == 403
+    assert client.get(f"/tasks/{tid}/submissions/{iid}").status_code == 403
+
+
+def test_administrator_can_open_submissions_list_and_workspace(client: TestClient) -> None:
+    """Story 4.1 AC4: administrators share mentor task/submission space."""
+    trigger_lifespan(client)
+    from examai.models import TaskAssignment
+
+    admin = _seed_user("mw-admin-sub@example.com", "secret", "administrator")
+    intern = _seed_user("mw-intern-admin@example.com", "secret", "intern")
+    db = get_session_factory()()
+    try:
+        task = Task(title="Admin submissions task", description="x", due_date=None)
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        task_id = task.id
+        db.add(TaskAssignment(task_id=task_id, intern_user_id=intern.id))
+        db.commit()
+    finally:
+        db.close()
+
+    login_with_password(client, admin.email, "secret")
+    lst = client.get(f"/tasks/{task_id}/submissions")
+    assert lst.status_code == 200
+    assert intern.email in lst.text
+    ws = client.get(f"/tasks/{task_id}/submissions/{intern.id}")
+    assert ws.status_code == 200
+    assert "Mentor workspace" in ws.text
+
+
 def test_ai_draft_post_persists_audit_rows(client: TestClient, test_settings) -> None:
     trigger_lifespan(client)
     mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission()
@@ -327,4 +365,147 @@ def test_publish_review_persists_and_shows_flash(client: TestClient, test_settin
     assert page2.status_code == 200
     assert "Review published" in page2.text
     assert "Last published" in page2.text
+
+
+def _seed_task_assignment_only(
+    *,
+    mentor_email: str = "mw-mentor-coords@example.com",
+    intern_email: str = "mw-intern-coords@example.com",
+) -> tuple[User, User, uuid.UUID, uuid.UUID]:
+    """Task with intern assignment but no submission row (Story 4.2)."""
+    mentor = _seed_user(mentor_email, "secret", "mentor")
+    intern = _seed_user(intern_email, "secret", "intern")
+    db = get_session_factory()()
+    try:
+        from examai.models import TaskAssignment
+
+        task = Task(title="Coords task", description="x", due_date=None)
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        db.add(TaskAssignment(task_id=task.id, intern_user_id=intern.id))
+        db.commit()
+        return mentor, intern, task.id, intern.id
+    finally:
+        db.close()
+
+
+def test_mentor_post_coordinates_creates_submission(client: TestClient) -> None:
+    """Story 4.2: POST .../coordinates upserts when no row exists (FR19)."""
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id = _seed_task_assignment_only()
+    login_with_password(client, mentor.email, "secret")
+
+    page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+    assert page.status_code == 200
+    assert "Repository coordinates" in page.text
+    csrf = extract_csrf(page.text)
+    r = client.post(
+        f"/tasks/{task_id}/submissions/{intern_id}/coordinates",
+        data={
+            "csrf_token": csrf,
+            "repo_identifier": "mentor-org/mentor-repo",
+            "commit_sha": "deadbeef",
+            "path_scope": "/lib",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(
+            select(Submission).where(
+                Submission.task_id == task_id,
+                Submission.intern_user_id == intern_id,
+            )
+        ).scalar_one()
+        assert sub.repo_identifier == "mentor-org/mentor-repo"
+        assert sub.commit_sha == "deadbeef"
+        assert sub.path_scope == "/lib"
+    finally:
+        db.close()
+
+    page2 = client.get(f"/tasks/{task_id}/submissions/{intern_id}", follow_redirects=False)
+    assert page2.status_code == 200
+    assert "Submission coordinates saved" in page2.text
+    assert "mentor-org/mentor-repo" in page2.text
+
+
+def test_mentor_post_coordinates_updates_existing(client: TestClient) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, _sub_id = _seed_task_with_submission(
+        mentor_email="mw-mentor-upd@example.com",
+        intern_email="mw-intern-upd@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+    page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+    csrf = extract_csrf(page.text)
+    r = client.post(
+        f"/tasks/{task_id}/submissions/{intern_id}/coordinates",
+        data={
+            "csrf_token": csrf,
+            "repo_identifier": "fixed/org-repo",
+            "commit_sha": "",
+            "path_scope": "",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(
+            select(Submission).where(
+                Submission.task_id == task_id,
+                Submission.intern_user_id == intern_id,
+            )
+        ).scalar_one()
+        assert sub.repo_identifier == "fixed/org-repo"
+        assert sub.commit_sha is None
+    finally:
+        db.close()
+
+
+def test_mentor_post_coordinates_empty_repo_flash(client: TestClient) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id = _seed_task_assignment_only(
+        mentor_email="mw-mentor-val@example.com",
+        intern_email="mw-intern-val@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+    page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+    csrf = extract_csrf(page.text)
+    r = client.post(
+        f"/tasks/{task_id}/submissions/{intern_id}/coordinates",
+        data={
+            "csrf_token": csrf,
+            "repo_identifier": "   ",
+            "commit_sha": "",
+            "path_scope": "",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    page2 = client.get(f"/tasks/{task_id}/submissions/{intern_id}", follow_redirects=False)
+    assert page2.status_code == 200
+    assert "Repository is required" in page2.text
+
+
+def test_intern_forbidden_post_coordinates(client: TestClient) -> None:
+    """POST /tasks/.../coordinates is mentor or administrator only (FR5)."""
+    trigger_lifespan(client)
+    _seed_user("mw-intern-postc@example.com", "secret", "intern")
+    login_with_password(client, "mw-intern-postc@example.com", "secret")
+    tid, iid = uuid.uuid4(), uuid.uuid4()
+    assert (
+        client.post(
+            f"/tasks/{tid}/submissions/{iid}/coordinates",
+            data={
+                "csrf_token": "x",
+                "repo_identifier": "a/b",
+            },
+        ).status_code
+        == 403
+    )
 

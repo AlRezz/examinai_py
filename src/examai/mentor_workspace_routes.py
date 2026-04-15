@@ -1,4 +1,4 @@
-"""Mentor submission workspace, AI draft audit, degraded LLM UX (Epic 5)."""
+"""Mentor submission workspace: coordinates (Epic 4), AI draft audit, degraded LLM UX (Epic 5)."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import get_db
 from examai.http.security_middleware import SESSION_USER_KEY
 from examai.integration.ai import OllamaClientError, ollama_generate
+from examai.intern_tasks_repo import upsert_intern_submission_coordinates
 from examai.models import AiDraft, ModelInvocation, Task
 from examai.mentor_workspace_repo import (
     get_latest_ai_draft,
@@ -201,6 +202,52 @@ def submission_workspace(
             "degraded_inference": degraded_inference,
         },
     )
+
+
+@router.post("/tasks/{task_id}/submissions/{intern_id}/coordinates")
+def post_submission_coordinates(
+    request: Request,
+    task_id: uuid.UUID,
+    intern_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    csrf_token: str = Form(...),
+    repo_identifier: str = Form(""),
+    commit_sha: str = Form(""),
+    path_scope: str = Form(""),
+) -> RedirectResponse:
+    """POST /tasks/{taskId}/submissions/{internId}/coordinates — FR19, docs/api-contracts.md."""
+    if not validate_csrf(request.session, csrf_token):
+        request.session["_flash"] = "Invalid or missing security token. Try again."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        request.session["_flash"] = "That task was not found."
+        return RedirectResponse(url="/tasks", status_code=303)
+    if not intern_assigned_to_task(db, task_id, intern_id):
+        request.session["_flash"] = "That intern is not assigned to this task."
+        return RedirectResponse(url=f"/tasks/{task_id}/submissions", status_code=303)
+
+    repo = repo_identifier.strip()
+    if not repo:
+        request.session["_flash"] = "Repository is required."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+    if len(repo) > 500:
+        request.session["_flash"] = "Repository must be at most 500 characters."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    csha = commit_sha.strip() or None
+    if csha is not None and len(csha) > 64:
+        request.session["_flash"] = "Commit SHA must be at most 64 characters."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    pscope = path_scope.strip() or None
+    if pscope is not None and len(pscope) > 2000:
+        request.session["_flash"] = "Path scope must be at most 2000 characters."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    upsert_intern_submission_coordinates(db, task_id, intern_id, repo, csha, pscope)
+    request.session["_flash"] = "Submission coordinates saved."
+    return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
 
 
 @router.post("/tasks/{task_id}/submissions/{intern_id}/ai-draft-assessment")

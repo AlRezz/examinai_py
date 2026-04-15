@@ -1,6 +1,6 @@
 # Story 4.1: Submissions list and mentor workspace
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,18 +33,18 @@ so that **I can review intern work**.
 
 ## Tasks / Subtasks
 
-- [ ] **Queries** (AC: 1, 2, 5)  
-  - [ ] List submissions for `task_id`; load workspace for `(task_id, intern_user_id)`.  
-  - [ ] Handle missing submission row (show empty state vs error — choose and document).
+- [x] **Queries** (AC: 1, 2, 5)  
+  - [x] List submissions for `task_id`; load workspace for `(task_id, intern_user_id)`.  
+  - [x] Handle missing submission row (show empty state vs error — choose and document).
 
-- [ ] **Routes** (AC: 1–4)  
-  - [ ] `GET /tasks/{taskId}/submissions`, `GET /tasks/{taskId}/submissions/{internId}` per contract.
+- [x] **Routes** (AC: 1–4)  
+  - [x] `GET /tasks/{taskId}/submissions`, `GET /tasks/{taskId}/submissions/{internId}` per contract.
 
-- [ ] **Templates** (AC: 2, 3)  
-  - [ ] `tasks/submissions.html`, `tasks/submission-detail.html`; optional includes for Git/degraded fragments.
+- [x] **Templates** (AC: 2, 3)  
+  - [x] `tasks/submissions.html`, `tasks/submission-detail.html`; optional includes for Git/degraded fragments.
 
-- [ ] **Tests**  
-  - [ ] Mentor/admin access; intern denied; happy path with seeded DB/fixtures.
+- [x] **Tests**  
+  - [x] Mentor/admin access; intern denied; happy path with seeded DB/fixtures.
 
 ## Dev Notes
 
@@ -66,14 +66,20 @@ so that **I can review intern work**.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Verified existing implementation: `mentor_workspace_repo.list_intern_submissions_for_task` (left join assignment → submission), `get_submission_for_pair`, workspace template `tasks/submission-detail.html` with empty state when no submission row; fragments `tasks/fragments/git-retrieval.html` and `tasks/fragments/degraded-inference-banner.html` included per UX-DR3.
+- RBAC: `rbac.required_roles_for_path` restricts `/tasks/**` to mentor or administrator; `SecurityMiddleware` enforces before handlers.
+- Added tests: intern receives 403 on submissions list and workspace URLs; administrator can open list and workspace (`tests/test_mentor_workspace_ai.py`).
+
 ### File List
+
+- `tests/test_mentor_workspace_ai.py` (Story 4.1 RBAC coverage)
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** **review** — ACs satisfied; full suite `85 passed` (2026-04-15).

@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.templating import Jinja2Templates
 
+from examai.ai_assessment_parsing import parse_ai_assessment_output
 from examai.config import get_settings
 from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import get_db
@@ -40,6 +41,8 @@ templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 
 router = APIRouter()
 
+_AI_RETRIEVED_CODE_MAX_CHARS = 12000
+
 
 def _current_user(request: Request, db: Session):
     uid = request.session.get(SESSION_USER_KEY)
@@ -53,7 +56,8 @@ def _build_ai_prompt(task: Task, submission) -> str:
     if len(desc) > 8000:
         desc = desc[:8000] + "\n…"
     parts = [
-        "You are assisting a mentor with a concise draft assessment of an intern's submission.",
+        "You are assisting a mentor with a draft assessment of an intern's submission.",
+        "Base your scores (1–5) and written feedback on the retrieved source code when it is present; otherwise use the task and coordinate context only.",
         "",
         f"Task title: {task.title}",
     ]
@@ -66,8 +70,44 @@ def _build_ai_prompt(task: Task, submission) -> str:
             f"Commit SHA: {submission.commit_sha or '(not set)'}",
             f"Path scope: {submission.path_scope or '(not set)'}",
             f"Submission status: {submission.status}",
+        ]
+    )
+    raw_code = (getattr(submission, "git_retrieved_text", None) or "").strip()
+    if raw_code:
+        if len(raw_code) > _AI_RETRIEVED_CODE_MAX_CHARS:
+            raw_code = raw_code[:_AI_RETRIEVED_CODE_MAX_CHARS] + "\n…"
+        parts.extend(
+            [
+                "",
+                "Retrieved source (for review; may be truncated):",
+                "```",
+                raw_code,
+                "```",
+            ]
+        )
+    else:
+        parts.extend(
+            [
+                "",
+                "Retrieved source: (none yet — run Git fetch in the workspace when configured so code can inform scores.)",
+            ]
+        )
+    parts.extend(
+        [
             "",
-            "Provide a short, professional assessment draft. Do not request or assume access to secrets, tokens, or environment variables.",
+            "Respond using EXACTLY this structure. First three lines must be scores (integers 1–5):",
+            "",
+            "Quality: <1-5>",
+            "Readability: <1-5>",
+            "Correctness: <1-5>",
+            "",
+            "### Feedback on the code",
+            "<your feedback>",
+            "",
+            "### Suggestions to improve",
+            "<your suggestions>",
+            "",
+            "Do not request or assume access to secrets, tokens, or environment variables.",
         ]
     )
     return "\n".join(parts)
@@ -396,6 +436,7 @@ def post_ai_draft_assessment(
     db: Session = Depends(get_db),
     csrf_token: str = Form(...),
 ) -> RedirectResponse:
+    user = _current_user(request, db)
     if not validate_csrf(request.session, csrf_token):
         request.session["_flash"] = "Invalid or missing security token. Try again."
         return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
@@ -453,8 +494,20 @@ def post_ai_draft_assessment(
             assessment_text=result.text,
         )
     )
-    db.commit()
-    request.session["_flash"] = "AI draft assessment was generated and recorded."
+    db.flush()
+    parsed = parse_ai_assessment_output(result.text)
+    upsert_mentor_review_draft(
+        db,
+        submission_id=submission.id,
+        mentor_user_id=user.id,
+        quality_score=parsed.quality_score,
+        readability_score=parsed.readability_score,
+        correctness_score=parsed.correctness_score,
+        narrative_feedback=parsed.narrative_feedback,
+    )
+    request.session["_flash"] = (
+        "AI draft assessment was generated and recorded; mentor review draft was updated from the model output."
+    )
     return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
 
 
@@ -506,6 +559,7 @@ def post_publish_review(
     readability_score: str = Form(""),
     correctness_score: str = Form(""),
     narrative: str = Form(""),
+    narrative_feedback: str = Form(""),
 ) -> RedirectResponse:
     user = _current_user(request, db)
     if not validate_csrf(request.session, csrf_token):
@@ -520,7 +574,7 @@ def post_publish_review(
     q = _parse_score(quality_score)
     r = _parse_score(readability_score)
     c = _parse_score(correctness_score)
-    narrative_clean = narrative.strip() or None
+    narrative_clean = narrative.strip() or narrative_feedback.strip() or None
 
     q = q if q is not None else (draft.quality_score if draft else None)
     r = r if r is not None else (draft.readability_score if draft else None)

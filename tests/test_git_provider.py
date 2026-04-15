@@ -41,12 +41,49 @@ def test_parse_repo_identifier_rejects_single_segment() -> None:
         parse_repo_identifier("onlyone")
 
 
-def test_fetch_empty_path_scope_loads_repo_root_via_contents_only() -> None:
-    """Optional path: skip commit API; GET /contents?ref= at repository root."""
+def test_fetch_empty_path_scope_uses_commit_all_files() -> None:
+    """Empty path_scope: GET /commits/{ref} and concatenate every ``files[]`` row."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         u = str(request.url)
-        assert "/commits/" not in u
+        assert "/repos/o/r/commits/main" in u
+        if "/commits/" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "files": [
+                        {"filename": "README.md", "patch": "diff --git a/README.md\n+hello\n"},
+                        {"filename": "src/a.py", "patch": "diff --git a/src/a.py\n+code\n"},
+                    ]
+                },
+            )
+        return httpx.Response(404)
+
+    with patch("examai.integration.git_provider.httpx.Client", _client_with_mock(handler)):
+        r = fetch_repository_contents(
+            api_base="https://api.github.com",
+            token="",
+            owner="o",
+            repo="r",
+            ref="main",
+            path_scope="",
+            timeout_seconds=30.0,
+        )
+
+    assert r.ok
+    assert r.normalized_text
+    assert r.source_kind == "patch"
+    assert "README.md" in r.normalized_text
+    assert "src/a.py" in r.normalized_text
+
+
+def test_fetch_empty_path_scope_falls_back_to_contents_when_commit_has_no_usable_files() -> None:
+    """If the commit has no resolvable file text, GET /contents?ref= at repository root."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/commits/" in u:
+            return httpx.Response(200, json={"files": []})
         if u.rstrip("/").endswith("/repos/o/r/contents") or "/repos/o/r/contents?" in u:
             return httpx.Response(
                 200,

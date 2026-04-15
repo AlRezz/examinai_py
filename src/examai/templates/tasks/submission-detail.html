@@ -101,8 +101,8 @@
     </section>
 
     <section class="mb-4" aria-labelledby="mentor-draft-heading">
-      <h2 id="mentor-draft-heading" class="h5">Mentor review (manual)</h2>
-      <p class="small text-muted">Human-only path — works even when AI is unavailable.</p>
+      <h2 id="mentor-draft-heading" class="h5">Mentor review</h2>
+      <p class="small text-muted">Rubric and narrative feedback; works when AI is unavailable. After <strong>Request AI draft</strong>, scores and text here are filled from the model when parsing succeeds — edit before publishing.</p>
       <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/review-draft" class="row g-3">
         {% include "fragments/csrf-field.html" %}
         <div class="col-md-4">
@@ -121,41 +121,24 @@
           <label for="narrative_feedback" class="form-label">Narrative feedback</label>
           <textarea class="form-control" id="narrative_feedback" name="narrative_feedback" rows="5">{{ mentor_draft.narrative_feedback if mentor_draft and mentor_draft.narrative_feedback else '' }}</textarea>
         </div>
-        <div class="col-12">
+        <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
           <button type="submit" class="btn btn-primary">Save draft</button>
+          <button type="submit" class="btn btn-success" formaction="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" formmethod="post">Publish review</button>
         </div>
       </form>
     </section>
 
-    <section aria-labelledby="publish-heading">
-      <h2 id="publish-heading" class="h5">Publish review</h2>
-      <p class="small text-muted">Publishes using the values below; if a field is left blank, the saved mentor draft is used.</p>
+    <section class="border-top pt-3" aria-labelledby="publish-heading">
+      <h2 id="publish-heading" class="h6 text-muted">Publish status</h2>
       {% if published %}
-      <div class="alert alert-light border mb-3" role="status">
-        <strong>Last published</strong> {{ published.published_at.strftime('%Y-%m-%d %H:%M UTC') }}
-      </div>
+      <p class="small mb-2"><strong>Last published</strong> {{ published.published_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+      {% else %}
+      <p class="small text-muted mb-2">No review published for this submission yet. Use <strong>Publish review</strong> above (or publish a saved draft below).</p>
       {% endif %}
-      <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" class="row g-3">
+      <p class="small text-muted mb-2">Blank fields are filled from the saved mentor draft. To publish what you last saved without re-editing the form above:</p>
+      <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" class="d-inline">
         {% include "fragments/csrf-field.html" %}
-        <div class="col-md-4">
-          <label for="pub_quality_score" class="form-label">Quality (1–5)</label>
-          <input class="form-control" id="pub_quality_score" name="quality_score" type="text" inputmode="numeric" maxlength="1" value="" />
-        </div>
-        <div class="col-md-4">
-          <label for="pub_readability_score" class="form-label">Readability (1–5)</label>
-          <input class="form-control" id="pub_readability_score" name="readability_score" type="text" inputmode="numeric" maxlength="1" value="" />
-        </div>
-        <div class="col-md-4">
-          <label for="pub_correctness_score" class="form-label">Correctness (1–5)</label>
-          <input class="form-control" id="pub_correctness_score" name="correctness_score" type="text" inputmode="numeric" maxlength="1" value="" />
-        </div>
-        <div class="col-12">
-          <label for="narrative" class="form-label">Narrative (optional if draft exists)</label>
-          <textarea class="form-control" id="narrative" name="narrative" rows="4"></textarea>
-        </div>
-        <div class="col-12">
-          <button type="submit" class="btn btn-success">Publish review</button>
-        </div>
+        <button type="submit" class="btn btn-outline-success btn-sm">Publish saved draft</button>
       </form>
     </section>
     {% endif %}

@@ -153,7 +153,21 @@ def test_ai_draft_post_persists_audit_rows(client: TestClient, test_settings) ->
                     pass
 
                 def json(self):
-                    return {"model": "m1", "response": "Assessment draft body.", "done": True}
+                    return {
+                        "model": "m1",
+                        "response": (
+                            "Quality: 4\n"
+                            "Readability: 3\n"
+                            "Correctness: 5\n"
+                            "\n"
+                            "### Feedback on the code\n"
+                            "Assessment draft body.\n"
+                            "\n"
+                            "### Suggestions to improve\n"
+                            "Iterate on edge cases.\n"
+                        ),
+                        "done": True,
+                    }
 
             return R()
 
@@ -181,12 +195,22 @@ def test_ai_draft_post_persists_audit_rows(client: TestClient, test_settings) ->
         assert inv.model_name
         draft = db.execute(select(AiDraft).where(AiDraft.model_invocation_id == inv.id)).scalar_one()
         assert "Assessment draft" in draft.assessment_text
+        mdraft = db.execute(
+            select(MentorReviewDraft).where(MentorReviewDraft.submission_id == sub_id)
+        ).scalar_one()
+        assert mdraft.quality_score == 4
+        assert mdraft.readability_score == 3
+        assert mdraft.correctness_score == 5
+        assert mdraft.narrative_feedback and "Assessment draft body" in mdraft.narrative_feedback
+        assert "Iterate on edge cases" in (mdraft.narrative_feedback or "")
+        assert mdraft.mentor_user_id == mentor.id
     finally:
         db.close()
 
     after = client.get(f"/tasks/{task_id}/submissions/{intern_id}", follow_redirects=False)
     assert after.status_code == 200
     assert "Assessment draft body" in after.text
+    assert "Iterate on edge cases" in after.text
 
 
 def test_ai_unconfigured_shows_degraded_and_skips_llm(client: TestClient, test_settings) -> None:
@@ -415,6 +439,43 @@ def test_publish_review_persists_and_shows_flash(client: TestClient, test_settin
     assert page2.status_code == 200
     assert "Review published" in page2.text
     assert "Last published" in page2.text
+
+
+def test_publish_review_accepts_narrative_feedback_alias(client: TestClient, test_settings) -> None:
+    """Publish form from mentor workspace sends narrative_feedback; server accepts it when narrative is empty."""
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="mw-pub-alias@example.com",
+        intern_email="mw-intern-alias@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+
+    patched = replace(test_settings, ollama_base_url="")
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+        csrf = extract_csrf(page.text)
+        r = client.post(
+            f"/tasks/{task_id}/submissions/{intern_id}/publish-review",
+            data={
+                "csrf_token": csrf,
+                "quality_score": "4",
+                "readability_score": "3",
+                "correctness_score": "2",
+                "narrative": "",
+                "narrative_feedback": "Published via narrative_feedback field.",
+            },
+            follow_redirects=False,
+        )
+        assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        pub = db.execute(
+            select(PublishedReview).where(PublishedReview.submission_id == sub_id)
+        ).scalar_one()
+        assert pub.narrative == "Published via narrative_feedback field."
+    finally:
+        db.close()
 
 
 def _seed_task_assignment_only(

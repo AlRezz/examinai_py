@@ -336,12 +336,14 @@ def fetch_repository_contents(
     """
     Load normalized text for mentor review / AI.
 
-    If ``path_scope`` is empty, only **GET /repos/{owner}/{repo}/contents?ref={ref}** (repository root listing).
+    Always start with **GET /repos/{owner}/{repo}/commits/{ref}** (``ref`` = commit SHA, branch, or tag).
 
-    Otherwise: **GET /repos/{owner}/{repo}/commits/{ref}** (``ref`` = commit SHA, branch, or tag), find
-    ``path_scope`` in ``files[]`` (``filename``): exact path, unique basename, single-file commit, or any file
-    under a **directory** scope (e.g. scope ``src`` matches ``src/main/java/...``). For matched row(s):
-    ``patch``, ``raw_url``, ``contents_url``; else **GET .../contents/{path}?ref={ref}**.
+    If ``path_scope`` is empty, use **every** ``files[]`` row (``patch``, ``raw_url``, ``contents_url``). If that
+    cannot produce text, **GET .../contents?ref={ref}** at repository root.
+
+    Otherwise find ``path_scope`` in ``files[]`` (``filename``): exact path, unique basename, single-file commit,
+    or any file under a **directory** scope (e.g. scope ``src`` matches ``src/main/java/...``). For matched
+    row(s): ``patch``, ``raw_url``, ``contents_url``; else **GET .../contents/{path}?ref={ref}**.
     """
     rel = _contents_path_for_scope(path_scope)
     root = api_base.rstrip("/")
@@ -354,18 +356,6 @@ def fetch_repository_contents(
 
     try:
         with httpx.Client(timeout=timeout, follow_redirects=True) as client:
-            if not rel:
-                return _fetch_via_contents_api(
-                    client,
-                    api_base=api_base,
-                    owner=owner,
-                    repo=repo,
-                    ref=ref_s,
-                    rel_path="",
-                    max_text_chars=max_text_chars,
-                    headers=headers,
-                )
-
             try:
                 r = client.get(commit_url, headers=headers)
             except (httpx.TransportError, httpx.TimeoutException) as e:
@@ -382,7 +372,11 @@ def fetch_repository_contents(
             raw_files = payload.get("files")
             files: list[Any] = raw_files if isinstance(raw_files, list) else []
 
-            entries = _find_commit_file_entries(files, rel)
+            if not rel:
+                entries = [x for x in files if isinstance(x, dict)]
+            else:
+                entries = _find_commit_file_entries(files, rel)
+
             text: str | None = None
             source_kind: str | None = None
             if entries:

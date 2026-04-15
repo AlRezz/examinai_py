@@ -1,5 +1,5 @@
 # generated: 2026-04-15T16:00:00Z
-# last_updated: 2026-04-15T22:30:00Z
+# last_updated: 2026-04-15T23:59:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T16:00:00Z"
-last_updated: "2026-04-15T22:30:00Z"
+last_updated: "2026-04-15T23:59:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -102,3 +102,7 @@ development_status:
   8-9-welcome-page-remove-jquery-check-and-stack-sections: done
   8-10-compose-env-git-provider-for-mentor-fetch: done
   epic-8-retrospective: optional
+
+  epic-9: done
+  9-1-ai-draft-rubric-mentor-draft-and-publish-ui: done
+  epic-9-retrospective: optional

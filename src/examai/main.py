@@ -22,6 +22,7 @@ from examai.http.security_middleware import SESSION_USER_KEY, SecurityMiddleware
 from examai.security import verify_password
 from examai.admin_routes import router as admin_router
 from examai.coordinator_routes import router as coordinator_router
+from examai.intern_routes import router as intern_router
 from examai.mentor_workspace_routes import router as mentor_workspace_router
 from examai.tasks_routes import router as tasks_router
 from examai.users_repo import get_user_by_email, get_user_by_id
@@ -53,6 +54,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         redoc_url=None,
     )
     app.include_router(tasks_router)
+    app.include_router(intern_router)
     app.include_router(mentor_workspace_router)
     app.include_router(coordinator_router)
     app.include_router(admin_router)
@@ -158,10 +160,6 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         )
 
     # Role-space smoke routes (Story 1.4) — minimal placeholders until epics 2–7 flesh them out.
-    @app.get("/intern/tasks", response_class=HTMLResponse)
-    def intern_tasks_placeholder(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse(request, "spaces/intern-tasks.html")
-
     @app.get("/review/queue", response_class=HTMLResponse)
     def review_queue_placeholder(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(request, "spaces/review-queue.html")

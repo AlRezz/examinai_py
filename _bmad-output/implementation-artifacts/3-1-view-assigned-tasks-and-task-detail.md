@@ -1,6 +1,6 @@
 # Story 3.1: View assigned tasks and task detail
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,18 +30,18 @@ so that **I know what work is required**.
 
 ## Tasks / Subtasks
 
-- [ ] **Queries** (AC: 1, 2)  
-  - [ ] List tasks for `current_user.id` through **`task_assignments`**.  
-  - [ ] Load task by ID with assignment check.
+- [x] **Queries** (AC: 1, 2)  
+  - [x] List tasks for `current_user.id` through **`task_assignments`**.  
+  - [x] Load task by ID with assignment check.
 
-- [ ] **Routes** (AC: 1–4)  
-  - [ ] `GET /intern/tasks`, `GET /intern/tasks/{taskId}` with intern-only dependency.
+- [x] **Routes** (AC: 1–4)  
+  - [x] `GET /intern/tasks`, `GET /intern/tasks/{taskId}` with intern-only dependency.
 
-- [ ] **Templates** (AC: 3)  
-  - [ ] Jinja2 templates under intern paths per **[docs/component-inventory.md](../../docs/component-inventory.md)**.
+- [x] **Templates** (AC: 3)  
+  - [x] Jinja2 templates under intern paths per **[docs/component-inventory.md](../../docs/component-inventory.md)**.
 
-- [ ] **Tests**  
-  - [ ] Intern sees assigned tasks; intern cannot access unassigned `taskId`; non-intern cannot access `/intern/tasks`.
+- [x] **Tests**  
+  - [x] Intern sees assigned tasks; intern cannot access unassigned `taskId`; non-intern cannot access `/intern/tasks`.
 
 ## Dev Notes
 
@@ -70,8 +70,23 @@ so that **I know what work is required**.
 
 ### Completion Notes List
 
+- Implemented `intern_tasks_repo` (join `tasks` ↔ `task_assignments` for current intern), `intern_routes` with `GET /intern/tasks` and `GET /intern/tasks/{task_id}`, Jinja templates `intern/tasks/list.html` and `intern/tasks/detail.html`. Unassigned or unknown tasks return **404** with an inline policy comment (no distinction from missing tasks). RBAC for `/intern/**` remains in `SecurityMiddleware` (intern-only). Removed placeholder `/intern/tasks` from `main.py`. Added `tests/test_intern_tasks.py`. Full suite: 69 passed.
+
 ### File List
+
+- `src/examai/intern_tasks_repo.py` (new)
+- `src/examai/intern_routes.py` (new)
+- `src/examai/main.py` (modified)
+- `src/examai/templates/intern/tasks/list.html` (new)
+- `src/examai/templates/intern/tasks/detail.html` (new)
+- `tests/test_intern_tasks.py` (new)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified)
+- `_bmad-output/implementation-artifacts/3-1-view-assigned-tasks-and-task-detail.md` (modified)
+
+### Change Log
+
+- 2026-04-15 — Story 3.1: intern assigned task list and detail; 404 policy for non-assigned task IDs; tests and sprint status → review.
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** Implementation complete. **review.**

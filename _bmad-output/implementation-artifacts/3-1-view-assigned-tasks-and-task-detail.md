@@ -1,6 +1,6 @@
 # Story 3.1: View assigned tasks and task detail
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -89,4 +89,4 @@ so that **I know what work is required**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

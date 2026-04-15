@@ -1,6 +1,6 @@
 # Story 3.4: Submission lifecycle status badge
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -85,4 +85,4 @@ so that **I understand retrieval/review state without raw errors only**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

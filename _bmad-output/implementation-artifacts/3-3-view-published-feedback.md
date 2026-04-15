@@ -1,6 +1,6 @@
 # Story 3.3: View published feedback
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -77,4 +77,4 @@ so that **I see official outcomes**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

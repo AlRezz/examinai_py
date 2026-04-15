@@ -1,6 +1,6 @@
 # Story 3.2: Submit or update submission coordinates
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -76,4 +76,4 @@ so that **mentors can retrieve my work**.
 
 ---
 
-**Story completion status:** Implementation complete. **review.**
+**Story completion status:** Implementation complete. **done.**

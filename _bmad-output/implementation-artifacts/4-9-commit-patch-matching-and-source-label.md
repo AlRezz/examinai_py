@@ -22,6 +22,7 @@ so that **I see unified diffs when GitHub provides them and understand what was 
 
 ## Tasks
 
+- [x] `git_provider.py` — single-file commits resolve text from `files[0]` (`files[0].patch` per GitHub commit API).
 - [x] `git_provider.py` — matching helpers, `GitFetchResult.source_kind`.
 - [x] `submissions.git_retrieved_source` — Liquibase `002`, SQLAlchemy model.
 - [x] Mentor fetch handler + `git-retrieval.html`.

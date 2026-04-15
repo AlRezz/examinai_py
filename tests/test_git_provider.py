@@ -149,6 +149,45 @@ def test_fetch_falls_back_to_contents_when_not_in_commit_files() -> None:
     assert r.source_kind == "contents_api_file"
 
 
+def test_fetch_single_file_commit_uses_files_zero_patch_github_api_shape() -> None:
+    """Commit response ``files`` array: first entry’s ``patch`` (``files[0].patch``) — real GitHub JSON shape."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/commits/" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "sha": "e541b4093062c63a958769f1dab89ad02cf3224d",
+                    "files": [
+                        {
+                            "sha": "b5a75a2c909a4e75a0fb47764b558644e41c91ac",
+                            "filename": "src/main/java/org/example/Main.java",
+                            "status": "added",
+                            "patch": "@@ -0,0 +1,16 @@\n+package org.example;\n",
+                        }
+                    ],
+                },
+            )
+        return httpx.Response(404)
+
+    with patch("examai.integration.git_provider.httpx.Client", _client_with_mock(handler)):
+        r = fetch_repository_contents(
+            api_base="https://api.github.com",
+            token="",
+            owner="AlRezz",
+            repo="TestFibonacci",
+            ref="e541b4093062c63a958769f1dab89ad02cf3224d",
+            path_scope="src/main/java/org/example/Main.java",
+            timeout_seconds=30.0,
+        )
+
+    assert r.ok
+    assert r.source_kind == "patch"
+    assert r.normalized_text
+    assert "package org.example" in (r.normalized_text or "")
+
+
 def test_fetch_single_file_commit_still_resolves_patch_when_scope_does_not_match() -> None:
     """GitHub init commit: one file; path scope typo still picks ``files[0]`` and ``patch``."""
 
@@ -182,6 +221,78 @@ def test_fetch_single_file_commit_still_resolves_patch_when_scope_does_not_match
     assert r.ok
     assert r.source_kind == "patch"
     assert "@@ -0,0 +1,2 @@" in (r.normalized_text or "")
+
+
+def test_fetch_directory_scope_with_trailing_slash_resolves_patch() -> None:
+    """Path scope ``src/`` must normalize like ``src`` so prefix match finds ``files[].patch``."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/commits/" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "files": [
+                        {
+                            "filename": "src/App.java",
+                            "patch": "trailing-slash-scope\n",
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404)
+
+    with patch("examai.integration.git_provider.httpx.Client", _client_with_mock(handler)):
+        r = fetch_repository_contents(
+            api_base="https://api.github.com",
+            token="",
+            owner="org",
+            repo="repo",
+            ref="abc",
+            path_scope="src/",
+            timeout_seconds=30.0,
+        )
+
+    assert r.ok
+    assert r.source_kind == "patch"
+    assert "trailing-slash-scope" in (r.normalized_text or "")
+
+
+def test_fetch_directory_scope_resolves_nested_file_patch() -> None:
+    """Path scope ``src`` must match ``src/main/java/...`` and return ``files[].patch``, not a dir listing."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/commits/" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "files": [
+                        {
+                            "filename": "src/main/java/org/example/Main.java",
+                            "patch": "@@ -0,0 +1,2 @@\n+package org.example;\n",
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404, json={"message": "should not GET contents for src dir"})
+
+    with patch("examai.integration.git_provider.httpx.Client", _client_with_mock(handler)):
+        r = fetch_repository_contents(
+            api_base="https://api.github.com",
+            token="",
+            owner="org",
+            repo="repo",
+            ref="e541b4093062c63a958769f1dab89ad02cf3224d",
+            path_scope="src",
+            timeout_seconds=30.0,
+        )
+
+    assert r.ok
+    assert r.source_kind == "patch"
+    assert r.normalized_text
+    assert "@@ -0,0 +1,2 @@" in (r.normalized_text or "")
+    assert "dir" not in (r.normalized_text or "").lower()
 
 
 def test_fetch_matches_unique_basename() -> None:

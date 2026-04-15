@@ -38,7 +38,7 @@
     {% endif %}
     {% if submission and submission.git_retrieved_source %}
     <p class="text-muted mb-2"><strong>Retrieved as:</strong>
-      {% if submission.git_retrieved_source == 'patch' %}unified diff from the commit (<code>files[].patch</code>)
+      {% if submission.git_retrieved_source == 'patch' %}unified diff from the commit (<code>files[0].patch</code> when one file, else the matched <code>files[i].patch</code>)
       {% elif submission.git_retrieved_source == 'raw_url' %}raw file from <code>raw_url</code>
       {% elif submission.git_retrieved_source == 'contents_url' %}Contents API via <code>contents_url</code>
       {% elif submission.git_retrieved_source == 'contents_api_file' %}file via <code>GET …/contents/{path}</code>

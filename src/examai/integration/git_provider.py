@@ -62,7 +62,8 @@ def parse_repo_identifier(raw: str) -> tuple[str, str]:
 def _contents_path_for_scope(path_scope: str | None) -> str:
     if not path_scope or not str(path_scope).strip():
         return ""
-    p = str(path_scope).strip().lstrip("/")
+    # Trailing slash breaks directory-prefix match (``src/`` + ``/`` ≠ ``src/main/...``).
+    p = str(path_scope).strip().lstrip("/").rstrip("/")
     return p
 
 
@@ -140,22 +141,36 @@ def _path_matches_scope(filename: str, want: str) -> bool:
     return False
 
 
-def _find_commit_file_entry(files: list[Any], want_path: str) -> dict[str, Any] | None:
+def _file_is_under_directory_scope(filename: str, dir_scope: str) -> bool:
+    """True when ``filename`` is exactly ``dir_scope`` or lives under it (``dir_scope/...``)."""
+    fn = _normalize_repo_path(filename)
+    w = _normalize_repo_path(dir_scope)
+    if not w or not fn:
+        return False
+    if fn == w:
+        return True
+    return fn.startswith(w + "/")
+
+
+def _find_commit_file_entries(files: list[Any], want_path: str) -> list[dict[str, Any]]:
     """
-    Match ``files[]`` to path scope. Prefer exact path rules, then unique basename, then a lone file.
+    Match ``files[]`` to path scope: exact rules, basename, single-file commit, then directory prefix.
+
+    When ``want_path`` is a folder (e.g. ``src``), every ``filename`` under that path matches
+    (e.g. ``src/main/java/...``). Multiple matches return multiple rows (patches concatenated by caller).
     """
     w = _normalize_repo_path(want_path)
     if not w:
-        return None
+        return []
 
     dict_rows: list[dict[str, Any]] = [x for x in files if isinstance(x, dict)]
     if not dict_rows:
-        return None
+        return []
 
     for item in dict_rows:
         fn = _normalize_repo_path(item.get("filename") or "")
         if fn and _path_matches_scope(fn, w):
-            return item
+            return [item]
 
     want_base = w.split("/")[-1]
     if want_base:
@@ -165,12 +180,22 @@ def _find_commit_file_entry(files: list[Any], want_path: str) -> dict[str, Any] 
             if _normalize_repo_path(item.get("filename") or "").split("/")[-1] == want_base
         ]
         if len(basename_hits) == 1:
-            return basename_hits[0]
+            return basename_hits
 
     if len(dict_rows) == 1:
-        return dict_rows[0]
+        # Single-file commit (e.g. init): GitHub ``files`` has one row — use ``files[0]`` for ``.patch`` / fallbacks.
+        return [dict_rows[0]]
 
-    return None
+    prefix_hits = [
+        item
+        for item in dict_rows
+        if _file_is_under_directory_scope(_normalize_repo_path(item.get("filename") or ""), w)
+    ]
+    prefix_hits.sort(key=lambda it: _normalize_repo_path(it.get("filename") or ""))
+    if prefix_hits:
+        return prefix_hits
+
+    return []
 
 
 def _try_text_from_commit_file_entry(
@@ -178,7 +203,7 @@ def _try_text_from_commit_file_entry(
     token: str,
     entry: dict[str, Any],
 ) -> tuple[str, str] | None:
-    """Resolve text from a commit ``files[]`` row: patch → raw_url → contents_url."""
+    """Resolve text from one commit ``files[i]`` row (often ``files[0]``): patch → raw_url → contents_url."""
     patch = entry.get("patch")
     if isinstance(patch, str) and patch.strip():
         return (patch, "patch")
@@ -209,6 +234,39 @@ def _try_text_from_commit_file_entry(
             return None
 
     return None
+
+
+def _try_text_from_commit_file_entries(
+    client: httpx.Client,
+    token: str,
+    entries: list[dict[str, Any]],
+) -> tuple[str, str] | None:
+    """Resolve text for one or more ``files[]`` rows (concatenate when multiple)."""
+    if not entries:
+        return None
+    if len(entries) == 1:
+        return _try_text_from_commit_file_entry(client, token, entries[0])
+
+    parts: list[str] = []
+    kinds: list[str] = []
+    for entry in entries:
+        got = _try_text_from_commit_file_entry(client, token, entry)
+        if got is None:
+            return None
+        text, kind = got
+        fname = _normalize_repo_path(entry.get("filename") or "?")
+        parts.append(f"=== {fname} ===\n{text}")
+        kinds.append(kind)
+
+    combined = "\n\n".join(parts)
+    uniq = set(kinds)
+    if len(uniq) == 1:
+        source_kind = kinds[0]
+    elif "patch" in kinds:
+        source_kind = "patch"
+    else:
+        source_kind = kinds[0]
+    return (combined, source_kind)
 
 
 def _fetch_via_contents_api(
@@ -281,8 +339,9 @@ def fetch_repository_contents(
     If ``path_scope`` is empty, only **GET /repos/{owner}/{repo}/contents?ref={ref}** (repository root listing).
 
     Otherwise: **GET /repos/{owner}/{repo}/commits/{ref}** (``ref`` = commit SHA, branch, or tag), find
-    ``path_scope`` in ``files[]`` (``filename``), then for that row: ``patch``, ``raw_url``, ``contents_url``,
-    else **GET .../contents/{path}?ref={ref}**.
+    ``path_scope`` in ``files[]`` (``filename``): exact path, unique basename, single-file commit, or any file
+    under a **directory** scope (e.g. scope ``src`` matches ``src/main/java/...``). For matched row(s):
+    ``patch``, ``raw_url``, ``contents_url``; else **GET .../contents/{path}?ref={ref}**.
     """
     rel = _contents_path_for_scope(path_scope)
     root = api_base.rstrip("/")
@@ -323,11 +382,11 @@ def fetch_repository_contents(
             raw_files = payload.get("files")
             files: list[Any] = raw_files if isinstance(raw_files, list) else []
 
-            entry = _find_commit_file_entry(files, rel)
+            entries = _find_commit_file_entries(files, rel)
             text: str | None = None
             source_kind: str | None = None
-            if entry is not None:
-                resolved = _try_text_from_commit_file_entry(client, token, entry)
+            if entries:
+                resolved = _try_text_from_commit_file_entries(client, token, entries)
                 if resolved is not None:
                     text, source_kind = resolved
 

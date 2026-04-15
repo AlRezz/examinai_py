@@ -73,6 +73,16 @@ def _prompt_hash(prompt: str) -> str:
     return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
 
 
+_AI_FLASH_DETAIL_MAX = 320
+
+
+def _shorten_for_flash(msg: str, *, max_len: int = _AI_FLASH_DETAIL_MAX) -> str:
+    s = msg.strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + "…"
+
+
 def _parse_score(raw: str) -> Optional[int]:
     s = raw.strip()
     if not s:
@@ -237,8 +247,9 @@ def post_ai_draft_assessment(
             max_retries=settings.ollama_max_retries,
         )
     except OllamaClientError as e:
+        detail = _shorten_for_flash(str(e))
         request.session["_flash"] = (
-            f"AI draft could not be generated: {e}. "
+            f"AI draft could not be generated: {detail}. "
             "You can still save a manual review and publish without waiting for AI."
         )
         return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)

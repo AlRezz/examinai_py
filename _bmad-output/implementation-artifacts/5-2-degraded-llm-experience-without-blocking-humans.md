@@ -1,6 +1,6 @@
 # Story 5.2: Degraded LLM experience without blocking humans
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -57,6 +57,7 @@ Composer (Cursor agent)
 
 - Implemented degraded banner and flash-based failure signaling on the mentor submission workspace; Ollama client is not invoked when `OLLAMA_BASE_URL` is unset.
 - Wired minimal mentor draft save and publish so human workflows work without AI.
+- 2026-04-15: Review patches — `publish-review` E2E test; Ollama failure + long-flash tests (shared with 5.1).
 
 ### File List
 
@@ -65,6 +66,12 @@ Composer (Cursor agent)
 - `src/examai/mentor_workspace_routes.py` (POST handlers, flash messages)
 - `tests/test_mentor_workspace_ai.py`
 
+### Review Findings
+
+- [x] [Review][Defer] Mentor vs task scoping — same as 5-1 review; any mentor/admin with `/tasks` access may open a workspace by URL — deferred [`src/examai/mentor_workspace_routes.py`]
+- [x] [Review][Patch] Add automated test for `POST .../publish-review` (happy path: `PublishedReview` persisted, flash, redirect) [`tests/test_mentor_workspace_ai.py`]
+- [x] [Review][Patch] Same as 5-1: integration test for Ollama failure path (degraded banner + no audit rows) if not tracked only under 5-1 [`tests/test_mentor_workspace_ai.py`]
+
 ---
 
-**Story completion status:** Implementation complete — **review**.
+**Story completion status:** **done** (review patches applied 2026-04-15).

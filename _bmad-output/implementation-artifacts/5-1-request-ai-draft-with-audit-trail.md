@@ -1,6 +1,6 @@
 # Story 5.1: Request AI draft with audit trail
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -95,7 +95,14 @@ Composer (Cursor agent)
 ### Change Log
 
 - 2026-04-16: Story 5.1 — Ollama integration module, audit tables, mentor workspace + AI POST, tests; status → review.
+- 2026-04-15: Review patches — `ollama_generate` failure tests, long-error flash truncation (`_shorten_for_flash`).
+
+### Review Findings
+
+- [x] [Review][Defer] Mentor workspace does not verify the current user is assigned as mentor for the task (only `/tasks` RBAC + intern assignment) — deferred, product scope [`src/examai/mentor_workspace_routes.py`]
+- [x] [Review][Patch] Add test: mock `ollama_generate` raising `OllamaClientError` — expect warning flash, no `model_invocations` / `ai_drafts` rows, workspace still 200 [`tests/test_mentor_workspace_ai.py`]
+- [x] [Review][Patch] Optionally truncate or summarize AI error text in session flash after Ollama failures (avoid very long upstream bodies in UI) [`src/examai/mentor_workspace_routes.py` ~240–243]
 
 ---
 
-**Story completion status:** Implementation complete — **review**.
+**Story completion status:** **done** (review patches applied 2026-04-15).

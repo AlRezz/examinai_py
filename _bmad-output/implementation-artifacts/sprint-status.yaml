@@ -1,5 +1,5 @@
 # generated: 2026-04-15T07:41:12Z
-# last_updated: 2026-04-15T23:00:00Z
+# last_updated: 2026-04-15T22:30:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T07:41:12Z"
-last_updated: "2026-04-16T20:35:00Z"
+last_updated: "2026-04-15T22:30:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -71,9 +71,9 @@ development_status:
   4-6-mentor-review-queue: backlog
   epic-4-retrospective: optional
 
-  epic-5: in-progress
-  5-1-request-ai-draft-with-audit-trail: review
-  5-2-degraded-llm-experience-without-blocking-humans: review
+  epic-5: done
+  5-1-request-ai-draft-with-audit-trail: done
+  5-2-degraded-llm-experience-without-blocking-humans: done
   epic-5-retrospective: optional
 
   epic-6: in-progress

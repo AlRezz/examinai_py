@@ -15,8 +15,10 @@ from starlette.templating import Jinja2Templates
 from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import get_db
 from examai.http.security_middleware import SESSION_USER_KEY
+from examai.rbac import ROLE_INTERN
+from examai.task_assignments_repo import assigned_intern_ids_for_task, replace_task_assignments
 from examai.tasks_repo import create_task, get_task_by_id, list_tasks, update_task
-from examai.users_repo import get_user_by_id
+from examai.users_repo import get_user_by_id, list_users_with_role
 
 _ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
@@ -183,3 +185,67 @@ def task_edit_post(
     update_task(db, task, title=title_clean, description=desc_clean, due_date=due_parsed)
     request.session["_flash"] = "Task updated."
     return RedirectResponse(url="/tasks", status_code=303)
+
+
+@router.get("/tasks/{task_id}/assignments", response_class=HTMLResponse)
+def task_assignments_get(
+    request: Request,
+    task_id: uuid.UUID,
+    db: Session = Depends(get_db),
+) -> HTMLResponse:
+    user = _current_user(request, db)
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        return templates.TemplateResponse(
+            request,
+            "error.html",
+            {"message": "That task was not found."},
+            status_code=404,
+        )
+    csrf_token = get_or_create_csrf(request.session)
+    flash = request.session.pop("_flash", None)
+    interns = list_users_with_role(db, ROLE_INTERN)
+    assigned = assigned_intern_ids_for_task(db, task_id)
+    return templates.TemplateResponse(
+        request,
+        "tasks/assign.html",
+        {
+            "user": user,
+            "csrf_token": csrf_token,
+            "flash": flash,
+            "task": task,
+            "interns": interns,
+            "assigned_ids": assigned,
+        },
+    )
+
+
+@router.post("/tasks/{task_id}/assignments")
+async def task_assignments_post(
+    request: Request,
+    task_id: uuid.UUID,
+    db: Session = Depends(get_db),
+) -> RedirectResponse:
+    form = await request.form()
+    csrf_raw = form.get("csrf_token")
+    csrf_token = csrf_raw if isinstance(csrf_raw, str) else None
+    if not csrf_token or not validate_csrf(request.session, csrf_token):
+        request.session["_flash"] = "Invalid or missing security token. Try again."
+        return RedirectResponse(url=f"/tasks/{task_id}/assignments", status_code=303)
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        request.session["_flash"] = "That task was not found."
+        return RedirectResponse(url="/tasks", status_code=303)
+    raw_ids = form.getlist("intern_id")
+    selected: list[uuid.UUID] = []
+    for item in raw_ids:
+        if isinstance(item, str):
+            selected.append(uuid.UUID(item))
+    allowed = {u.id for u in list_users_with_role(db, ROLE_INTERN)}
+    invalid = [i for i in selected if i not in allowed]
+    if invalid:
+        request.session["_flash"] = "One or more selected users are not interns."
+        return RedirectResponse(url=f"/tasks/{task_id}/assignments", status_code=303)
+    replace_task_assignments(db, task_id, selected)
+    request.session["_flash"] = "Assignments updated."
+    return RedirectResponse(url=f"/tasks/{task_id}/assignments", status_code=303)

@@ -8,7 +8,7 @@ from typing import FrozenSet
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from examai.models import Role, User
+from examai.models import Role, User, user_roles
 
 
 def get_user_by_email(session: Session, email: str) -> User | None:
@@ -31,3 +31,15 @@ def role_names_for_user(session: Session, user_id: uuid.UUID) -> FrozenSet[str]:
     if user is None:
         return frozenset()
     return frozenset(r.name for r in user.roles)
+
+
+def list_users_with_role(session: Session, role_name: str) -> list[User]:
+    """Users that have the given role name, ordered by email."""
+    stmt = (
+        select(User)
+        .join(user_roles, User.id == user_roles.c.user_id)
+        .join(Role, Role.id == user_roles.c.role_id)
+        .where(Role.name == role_name)
+        .order_by(User.email)
+    )
+    return list(session.scalars(stmt).unique().all())

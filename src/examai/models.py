@@ -83,4 +83,19 @@ class Task(Base):
     )
 
 
-__all__ = ["Base", "User", "Role", "user_roles", "Task"]
+class TaskAssignment(Base):
+    __tablename__ = "task_assignments"
+
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    intern_user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+__all__ = ["Base", "User", "Role", "user_roles", "Task", "TaskAssignment"]

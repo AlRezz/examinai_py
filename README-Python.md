@@ -26,7 +26,7 @@ curl -sSf http://127.0.0.1:8080/actuator/health
 
 ## Run with Docker Compose (full stack)
 
-Build and start **app** (FastAPI on **8080**), **db** (PostgreSQL on **5432**), and **llm** (Ollama on **11434**):
+Build and start **app** (FastAPI on **8080**), **db** (PostgreSQL on **5432**), **db-migrate** (Liquibase, one-shot), and **llm** (Ollama on **11434**):
 
 ```bash
 docker compose up --build
@@ -35,7 +35,13 @@ docker compose up --build
 - **Application URL:** `http://localhost:8080`
 - **Health:** `GET http://localhost:8080/actuator/health` → `{"status":"UP"}`
 
-The **app** service sets **`EXAMINAI_USE_LIQUIBASE=1`**: Liquibase applies `db/changelog/` before Uvicorn starts. Set **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** (and optionally **`EXAMINAI_ADMIN_EMAIL`**) in `.env` so the first **administrator** account is created after migrations (see `.env.example`). Init scripts under **`db/init/`** are mounted into Postgres and run **once** on an empty data volume; they do **not** replace Liquibase DDL.
+The **`db-migrate`** service uses the official **`liquibase/liquibase`** image to apply **`db/changelog/`** after **`db`** is healthy and **before** **`app`** starts (Compose `depends_on: service_completed_successfully`). The **app** image is Python-only (no OpenJDK). The **app** service sets **`EXAMINAI_USE_LIQUIBASE=1`** so the server skips SQLAlchemy `create_all` and expects Liquibase-managed tables.
+
+Set **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** (and optionally **`EXAMINAI_ADMIN_EMAIL`**) in `.env` so the first **administrator** account is created after migrations (see `.env.example`). Init scripts under **`db/init/`** are mounted into Postgres and run **once** on an empty data volume; they do **not** replace Liquibase DDL.
+
+**Run migrations only** (e.g. after pulling new changelogs): `docker compose run --rm db-migrate`
+
+**Compose requirement:** Docker Compose v2.20+ (or equivalent) for `service_completed_successfully` on **`db-migrate`**.
 
 ## Run the application image alone
 
@@ -45,7 +51,7 @@ From the repository root (after `docker compose build app`):
 docker compose run --rm --service-ports app
 ```
 
-Or build and run the image directly (you must supply **`EXAMINAI_DATABASE_URL`**, **`EXAMINAI_USE_LIQUIBASE`** if using Liquibase-managed Postgres, **`EXAMINAI_SECRET_KEY`**, **`OLLAMA_BASE_URL`**, etc.):
+Or build and run the **application** image directly — you must apply **`db/changelog/`** yourself first (e.g. `docker compose run --rm db-migrate` against the same DB, or the **`examai.liquibase_cli`** helper if Liquibase is installed on the host). Supply **`EXAMINAI_DATABASE_URL`**, **`EXAMINAI_USE_LIQUIBASE`** when using Liquibase-managed Postgres, **`EXAMINAI_SECRET_KEY`**, **`OLLAMA_BASE_URL`**, etc.:
 
 ```bash
 docker build -t examinai:local .

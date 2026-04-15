@@ -1,4 +1,8 @@
-"""Run Liquibase update for PostgreSQL when EXAMINAI_USE_LIQUIBASE is enabled."""
+"""Run Liquibase update for PostgreSQL when EXAMINAI_USE_LIQUIBASE is enabled.
+
+Docker Compose normally runs migrations via the db-migrate service (Liquibase image).
+Use this module when the liquibase CLI is on PATH (local dev or CI).
+"""
 
 from __future__ import annotations
 

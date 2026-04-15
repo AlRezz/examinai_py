@@ -1,4 +1,5 @@
 # Full stack: FastAPI (app) + PostgreSQL (db) + Ollama (llm).
+# Migrations: one-shot `db-migrate` (Liquibase image) runs before `app` — no Java in the app image.
 # Ports: app 8080, Postgres 5432, Ollama 11434 — see docs/deployment-guide.md
 #
 services:
@@ -19,6 +20,24 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  db-migrate:
+    image: liquibase/liquibase:4.29
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LIQUIBASE_COMMAND_PASSWORD: examinai
+    command:
+      # Liquibase 4.x resolves changelog files against --search-path; /changelog alone is not on the default path.
+      - "--search-path=/changelog"
+      - "--changelog-file=db.changelog-master.xml"
+      - "--url=jdbc:postgresql://db:5432/examinai"
+      - "--username=examinai"
+      - "update"
+    volumes:
+      - ./db/changelog:/changelog
 
   llm:
     image: ollama/ollama
@@ -42,8 +61,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       llm:
         condition: service_started
 

@@ -1,15 +1,5 @@
-# Python app + Liquibase (Java runtime for CLI only). Uvicorn on 8080 — docs/deployment-guide.md
+# Python app only — no JVM. Liquibase runs as a Compose one-shot service (see docker-compose.yml).
 FROM python:3.12-slim-bookworm
-
-RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre-headless unzip curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSL -o /tmp/lb.zip https://github.com/liquibase/liquibase/releases/download/v4.29.2/liquibase-4.29.2.zip \
-    && unzip -q /tmp/lb.zip -d /opt \
-    && mv /opt/liquibase-4.29.2 /opt/liquibase \
-    && rm /tmp/lb.zip \
-    && chmod +x /opt/liquibase/liquibase
-
-ENV PATH="/opt/liquibase:${PATH}"
 
 RUN useradd --create-home --uid 1000 appuser
 

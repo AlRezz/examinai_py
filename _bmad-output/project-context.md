@@ -40,7 +40,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 |---------|--------|
 | Runtime | **Python ≥ 3.9** (prefer **3.12+** for local dev; see `.python-version`) |
 | Web | **FastAPI** + **Uvicorn**; **Jinja2** for server-rendered HTML; **`python-multipart`** for forms |
-| DB | **SQLAlchemy 2.x** + **psycopg** (binary) → PostgreSQL; **Liquibase** applies **`db/changelog/`** when **`EXAMINAI_USE_LIQUIBASE`** is set (Docker). **Alembic** is listed in `pyproject.toml` for future revisions. |
+| DB | **SQLAlchemy 2.x** + **psycopg** (binary) → PostgreSQL; **Liquibase** applies **`db/changelog/`** via Compose **`db-migrate`** (or host CLI) when **`EXAMINAI_USE_LIQUIBASE`** is set — the app image has no JDK. **Alembic** is listed in `pyproject.toml` for future revisions. |
 | HTTP clients | **httpx** for Git provider + Ollama APIs |
 | Sessions | **itsdangerous** (signed cookies) — wire session middleware before role guards |
 | Tests | **pytest**, **pytest-cov** (optional dev extra) |

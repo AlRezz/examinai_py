@@ -697,6 +697,21 @@ So that **I can sanity-check intern, mentor, coordinator, and administrator jour
 **Then** I see a concise **user-flow** section covering **intern**, **mentor (or administrator on mentor routes)**, **coordinator**, and **administrator**, with **representative URLs or navigation** (aligned with **`docs/api-contracts.md`** / epics)  
 **And** flows are accurate for the current release (no obsolete routes)
 
+### Story 8.8: Slim app image — Liquibase Compose sidecar (no OpenJDK in app)
+
+As an **operator or developer**,  
+I want the **application Docker image to stay Python-only** while **Liquibase** still applies **`db/changelog/`** reliably,  
+So that **image builds do not bundle OpenJDK**, **failed Liquibase zip layouts do not break `docker build`**, and **migrations remain ordered before the app**.
+
+**Acceptance Criteria:**
+
+**Given** **`docker-compose.yml`** defines a one-shot **`db-migrate`** service using the official **`liquibase/liquibase`** image  
+**When** **`db`** is healthy  
+**Then** **`db-migrate`** runs **`liquibase update`** against the mounted **`db/changelog/`** and exits successfully before **`app`** starts (e.g. **`depends_on`** with **`service_completed_successfully`**)  
+**And** the **`app`** **`Dockerfile`** does not install **OpenJDK** or download the Liquibase OSS zip  
+**And** **`EXAMINAI_USE_LIQUIBASE=1`** on **`app`** still means the server skips SQLAlchemy **`create_all`** for PostgreSQL  
+**And** **README** / **deployment-guide** describe the split (sidecar vs. optional **`python -m examai.liquibase_cli`** on the host)
+
 ---
 
 ## Non-functional requirements

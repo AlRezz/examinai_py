@@ -29,7 +29,7 @@ Cross-cutting: **session-based auth**, **role-gated routes** (documented URL rul
 
 ## Data architecture
 
-**PostgreSQL.** Table definitions follow [data-models.md](./data-models.md). The **Docker** app image runs **Liquibase** against **`db/changelog/`** before Uvicorn when **`EXAMINAI_USE_LIQUIBASE`** is enabled. **Liquibase** YAML under **`JAVA_APP/.../db/changelog/`** (if present) is **reference DDL only** for parity checks, not a runtime dependency of the Python stack.
+**PostgreSQL.** Table definitions follow [data-models.md](./data-models.md). In **Docker Compose**, the **`db-migrate`** service (official Liquibase image) applies **`db/changelog/`** before the **app** container starts; the **app** image has no JVM. **`EXAMINAI_USE_LIQUIBASE`** on the app means schema is Liquibase-managed (skip ORM `create_all`). **Liquibase** YAML under **`JAVA_APP/.../db/changelog/`** (if present) is **reference DDL only** for parity checks, not a runtime dependency of the Python stack.
 
 ## AI and degraded behavior
 

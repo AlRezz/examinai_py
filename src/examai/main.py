@@ -21,6 +21,7 @@ from examai.database import create_schema, get_db, get_session_factory, configur
 from examai.http.security_middleware import SESSION_USER_KEY, SecurityMiddleware
 from examai.security import verify_password
 from examai.coordinator_routes import router as coordinator_router
+from examai.mentor_workspace_routes import router as mentor_workspace_router
 from examai.tasks_routes import router as tasks_router
 from examai.users_repo import get_user_by_email, get_user_by_id
 
@@ -51,6 +52,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         redoc_url=None,
     )
     app.include_router(tasks_router)
+    app.include_router(mentor_workspace_router)
     app.include_router(coordinator_router)
 
     root = _package_dir()

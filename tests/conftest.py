@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import re
-from typing import Generator
+from base64 import b64encode
+from typing import Any, Generator
 
+import itsdangerous
 import pytest
 from fastapi.testclient import TestClient
 
@@ -41,6 +44,17 @@ def extract_csrf(html: str) -> str:
     m = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
     assert m is not None, "csrf_token field not found in HTML"
     return m.group(1)
+
+
+def signed_session_cookies(
+    settings: Settings,
+    session_data: dict[str, Any],
+) -> dict[str, str]:
+    """Cookies dict for Starlette SessionMiddleware (matches starlette.middleware.sessions encoding)."""
+    signer = itsdangerous.TimestampSigner(str(settings.secret_key))
+    payload = b64encode(json.dumps(session_data).encode("utf-8"))
+    signed = signer.sign(payload)
+    return {settings.session_cookie_name: signed.decode("utf-8")}
 
 
 def login_with_password(client: TestClient, email: str, password: str) -> TestClient:

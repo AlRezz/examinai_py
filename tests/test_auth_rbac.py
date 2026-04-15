@@ -8,11 +8,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from examai.bootstrap import ensure_roles
+from examai.config import Settings
 from examai.database import get_session_factory
+from examai.http.security_middleware import SESSION_USER_KEY
 from examai.models import Role, User
 from examai.security import hash_password
 
-from tests.conftest import extract_csrf, login_with_password, trigger_lifespan
+from tests.conftest import (
+    extract_csrf,
+    login_with_password,
+    signed_session_cookies,
+    trigger_lifespan,
+)
 
 
 def _seed_user(email: str, password: str, role_name: str) -> None:
@@ -36,6 +43,32 @@ def _seed_user(email: str, password: str, role_name: str) -> None:
 def test_home_redirects_when_unauthenticated(client: TestClient) -> None:
     trigger_lifespan(client)
     r = client.get("/home", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers.get("location") == "/login"
+
+
+def test_malformed_session_uid_redirects_to_login(
+    client: TestClient, test_settings: Settings
+) -> None:
+    trigger_lifespan(client)
+    for name, value in signed_session_cookies(
+        test_settings, {SESSION_USER_KEY: "not-a-uuid"}
+    ).items():
+        client.cookies.set(name, value)
+    r = client.get("/home", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers.get("location") == "/login"
+
+
+def test_malformed_session_uid_blocked_on_rbac_route(
+    client: TestClient, test_settings: Settings
+) -> None:
+    trigger_lifespan(client)
+    for name, value in signed_session_cookies(
+        test_settings, {SESSION_USER_KEY: "bogus-id"}
+    ).items():
+        client.cookies.set(name, value)
+    r = client.get("/tasks", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers.get("location") == "/login"
 

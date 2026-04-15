@@ -89,6 +89,7 @@ def test_non_coordinator_denied_coordinator_routes(client: TestClient) -> None:
     trigger_lifespan(client)
     _seed_user("mentor7@example.com", "p", "mentor")
     _seed_user("intern7b@example.com", "p", "intern")
+    _seed_user("admin7@example.com", "p", "administrator")
 
     login_with_password(client, "mentor7@example.com", "p")
     assert client.get("/coordinator").status_code == 403
@@ -96,6 +97,10 @@ def test_non_coordinator_denied_coordinator_routes(client: TestClient) -> None:
 
     login_with_password(client, "intern7b@example.com", "p")
     assert client.get("/coordinator").status_code == 403
+
+    login_with_password(client, "admin7@example.com", "p")
+    assert client.get("/coordinator").status_code == 403
+    assert client.get(f"/coordinator/cases/{uuid.uuid4()}").status_code == 403
 
 
 def test_case_not_found_returns_404(client: TestClient) -> None:

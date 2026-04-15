@@ -1,6 +1,6 @@
 # Story 7.1: Coordinator index and case record
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -91,7 +91,14 @@ Cursor agent (implementation session)
 ## Change Log
 
 - 2026-04-16: Implemented coordinator index and case record (Story 7.1); submission model + integration tests.
+- 2026-04-16: CR 7-1 — AC4 admin denial test added; story → done.
+
+### Review Findings (CR 7-1, 2026-04-16)
+
+- [x] [Review][Patch] Assert **administrator** receives 403 on `/coordinator` and `/coordinator/cases/{id}` (AC4 lists admins with mentors/interns) — added in `tests/test_coordinator.py`.
+
+- [x] [Review][Defer → fixed] Invalid `uid` string in session no longer reaches handlers: `SecurityMiddleware` validates UUID shape, clears session, redirects to `/login` (GET) or 401 (mutating). Tests in `tests/test_auth_rbac.py`. [`security_middleware.py`]
 
 ---
 
-**Story completion status:** Implementation complete; **review**.
+**Story completion status:** **done** (post–CR 7-1).

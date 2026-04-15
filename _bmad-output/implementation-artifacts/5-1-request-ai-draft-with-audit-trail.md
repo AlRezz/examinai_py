@@ -1,6 +1,6 @@
 # Story 5.1: Request AI draft with audit trail
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -34,17 +34,17 @@ so that **I get a starting point without losing accountability**.
 
 ## Tasks / Subtasks
 
-- [ ] **`integration/ai`** (AC: 2, 4)  
-  - [ ] Ollama (or contract-aligned) client using **`OLLAMA_BASE_URL`** / env from **[docs/development-guide.md](../../docs/development-guide.md)** or deployment guide.
+- [x] **`integration/ai`** (AC: 2, 4)  
+  - [x] Ollama (or contract-aligned) client using **`OLLAMA_BASE_URL`** / env from **[docs/development-guide.md](../../docs/development-guide.md)** or deployment guide.
 
-- [ ] **Persistence** (AC: 3)  
-  - [ ] SQLAlchemy models for **`model_invocations`**, **`ai_drafts`**; transactional write after successful inference.
+- [x] **Persistence** (AC: 3)  
+  - [x] SQLAlchemy models for **`model_invocations`**, **`ai_drafts`**; transactional write after successful inference.
 
-- [ ] **Route** (AC: 1, 5)  
-  - [ ] `POST .../ai-draft-assessment` calls service layer; returns redirect/HTML with message per **UX-DR10**.
+- [x] **Route** (AC: 1, 5)  
+  - [x] `POST .../ai-draft-assessment` calls service layer; returns redirect/HTML with message per **UX-DR10**.
 
-- [ ] **Tests**  
-  - [ ] Mock httpx/Ollama for unit tests; optional integration test behind env flag.
+- [x] **Tests**  
+  - [x] Mock httpx/Ollama for unit tests; optional integration test behind env flag.
 
 ## Dev Notes
 
@@ -66,14 +66,36 @@ so that **I get a starting point without losing accountability**.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Added `examai.integration.ai` with `ollama_generate()` (httpx, timeouts, limited retries on transport errors).
+- Extended SQLAlchemy models and `POST /tasks/{taskId}/submissions/{internId}/ai-draft-assessment` with CSRF; persists `model_invocations` + `ai_drafts` after successful inference.
+- Implemented mentor workspace GET routes (`/tasks/.../submissions`, `/tasks/.../submissions/{internId}`) so the AI result can be shown on the page.
+- Settings: `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_SECONDS`, `OLLAMA_MAX_RETRIES`.
+
 ### File List
+
+- `src/examai/integration/__init__.py`
+- `src/examai/integration/ai.py`
+- `src/examai/config.py`
+- `src/examai/models.py`
+- `src/examai/mentor_workspace_repo.py`
+- `src/examai/mentor_workspace_routes.py`
+- `src/examai/main.py`
+- `src/examai/templates/tasks/submissions.html`
+- `src/examai/templates/tasks/submission-detail.html`
+- `src/examai/templates/tasks/fragments/git-retrieval.html`
+- `src/examai/templates/tasks/list.html`
+- `tests/test_mentor_workspace_ai.py`
+
+### Change Log
+
+- 2026-04-16: Story 5.1 — Ollama integration module, audit tables, mentor workspace + AI POST, tests; status → review.
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** Implementation complete — **review**.

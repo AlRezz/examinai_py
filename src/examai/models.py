@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Table, Column, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String, Table, Column, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
 
@@ -130,5 +130,118 @@ class Submission(Base):
         DateTime(timezone=True), default=_utc_now, onupdate=_utc_now, nullable=False
     )
 
+    model_invocations: Mapped[list["ModelInvocation"]] = relationship(
+        back_populates="submission",
+    )
 
-__all__ = ["Base", "User", "Role", "user_roles", "Task", "TaskAssignment", "Submission"]
+
+class ModelInvocation(Base):
+    """Successful LLM inference audit row (docs/data-models.md)."""
+
+    __tablename__ = "model_invocations"
+    __table_args__ = (Index("ix_model_invocations_submission_invoked", "submission_id", "invoked_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    submission_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("submissions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    invoked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, nullable=False)
+    model_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    model_version: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    submission: Mapped["Submission"] = relationship(back_populates="model_invocations")
+    ai_draft: Mapped[Optional["AiDraft"]] = relationship(back_populates="model_invocation", uselist=False)
+
+
+class AiDraft(Base):
+    """AI-generated assessment text linked to one invocation."""
+
+    __tablename__ = "ai_drafts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    model_invocation_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("model_invocations.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    assessment_text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    model_invocation: Mapped["ModelInvocation"] = relationship(back_populates="ai_draft")
+
+
+class MentorReviewDraft(Base):
+    """Mentor WIP rubric per submission."""
+
+    __tablename__ = "mentor_review_drafts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    submission_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("submissions.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    quality_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    readability_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    correctness_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    narrative_feedback: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    mentor_user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, onupdate=_utc_now, nullable=False
+    )
+
+    submission: Mapped["Submission"] = relationship()
+    mentor: Mapped["User"] = relationship()
+
+
+class PublishedReview(Base):
+    """Published mentor outcome per submission."""
+
+    __tablename__ = "published_reviews"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    submission_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("submissions.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    quality_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    readability_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    correctness_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    narrative: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    publishing_mentor_user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utc_now, nullable=False)
+    snapshot_commit_sha: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    snapshot_git_fetch_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    snapshot_path_scope: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
+
+    submission: Mapped["Submission"] = relationship()
+
+
+__all__ = [
+    "Base",
+    "User",
+    "Role",
+    "user_roles",
+    "Task",
+    "TaskAssignment",
+    "Submission",
+    "ModelInvocation",
+    "AiDraft",
+    "MentorReviewDraft",
+    "PublishedReview",
+]

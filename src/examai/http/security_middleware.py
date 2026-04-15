@@ -18,6 +18,14 @@ from examai.users_repo import role_names_for_user
 SESSION_USER_KEY = "uid"
 
 
+def _session_uid_is_valid_uuid(uid: str) -> bool:
+    try:
+        uuid.UUID(uid)
+        return True
+    except ValueError:
+        return False
+
+
 def is_public_route(path: str, method: str) -> bool:
     if path in ("/", "/error"):
         return True
@@ -54,6 +62,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         uid = request.session.get(SESSION_USER_KEY)
         if not uid or not isinstance(uid, str):
+            if method in ("GET", "HEAD"):
+                return RedirectResponse(url="/login", status_code=303)
+            return Response("Authentication required", status_code=401)
+
+        if not _session_uid_is_valid_uuid(uid):
+            request.session.clear()
             if method in ("GET", "HEAD"):
                 return RedirectResponse(url="/login", status_code=303)
             return Response("Authentication required", status_code=401)

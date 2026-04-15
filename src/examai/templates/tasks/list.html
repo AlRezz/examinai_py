@@ -41,6 +41,7 @@
             <td>{% if t.due_date %}{{ t.due_date.isoformat() }}{% else %}—{% endif %}</td>
             <td class="small text-muted">{{ t.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
             <td class="text-end">
+              <a class="btn btn-sm btn-outline-secondary me-1" href="/tasks/{{ t.id }}/submissions">Submissions</a>
               <a class="btn btn-sm btn-outline-secondary me-1" href="/tasks/{{ t.id }}/assignments">Assign</a>
               <a class="btn btn-sm btn-outline-primary" href="/tasks/{{ t.id }}/edit">Edit</a>
             </td>

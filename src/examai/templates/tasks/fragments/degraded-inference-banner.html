@@ -1,0 +1,10 @@
+{% if degraded_inference %}
+<div class="alert alert-warning border-warning" role="status" aria-live="polite">
+  <strong>AI draft limited or unavailable.</strong>
+  {% if not ollama_configured %}
+  <span>Ollama is not configured for this environment (set <code>OLLAMA_BASE_URL</code> and optionally <code>OLLAMA_MODEL</code>).</span>
+  {% else %}
+  <span>The last AI draft request did not complete. You can still write your review manually and publish without waiting for AI.</span>
+  {% endif %}
+</div>
+{% endif %}

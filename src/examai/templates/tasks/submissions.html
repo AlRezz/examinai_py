@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Submissions — {{ task.title }} — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <a class="nav-link py-0" href="/home">Home</a>
+        <a class="nav-link py-0" href="/tasks">Tasks</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/tasks">Tasks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ task.title }}</li>
+      </ol>
+    </nav>
+    <h1 class="h3 mb-3">Submissions</h1>
+    <p class="text-muted">{{ task.title }}</p>
+    {% if flash %}
+    <div class="alert alert-info" role="alert">{{ flash }}</div>
+    {% endif %}
+    {% if rows %}
+    <div class="table-responsive">
+      <table class="table table-sm table-striped align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Intern</th>
+            <th scope="col">Submission</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-end">Workspace</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.intern.email }}</td>
+            <td>
+              {% if row.submission %}
+              <span class="font-monospace small">{{ row.submission.repo_identifier }}</span>
+              {% else %}
+              <span class="text-muted">No submission row yet</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.submission %}{{ row.submission.status }}{% else %}—{% endif %}
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-primary" href="/tasks/{{ task.id }}/submissions/{{ row.intern.id }}">Open</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No interns assigned to this task. <a href="/tasks/{{ task.id }}/assignments">Assign interns</a>.</p>
+    {% endif %}
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

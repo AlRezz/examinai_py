@@ -591,7 +591,7 @@ def test_git_fetch_success_persists_state(client: TestClient, test_settings) -> 
     )
 
     def _fake_fetch(**_kwargs: object) -> GitFetchResult:
-        return GitFetchResult(ok=True, normalized_text="alpha\nbravo")
+        return GitFetchResult(ok=True, normalized_text="alpha\nbravo", source_kind="patch")
 
     with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
         with patch("examai.mentor_workspace_routes.fetch_repository_contents", _fake_fetch):
@@ -609,6 +609,7 @@ def test_git_fetch_success_persists_state(client: TestClient, test_settings) -> 
         sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
         assert sub.git_retrieval_state == "success"
         assert sub.git_retrieved_text and "alpha" in sub.git_retrieved_text
+        assert sub.git_retrieved_source == "patch"
         assert sub.git_fetch_version
         assert sub.git_retrieval_error_code is None
     finally:

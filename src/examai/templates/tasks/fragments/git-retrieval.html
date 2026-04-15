@@ -36,6 +36,17 @@
     {% if submission and submission.git_fetch_version %}
     <p class="text-muted mb-2"><strong>Fetch version:</strong> <code class="small">{{ submission.git_fetch_version }}</code></p>
     {% endif %}
+    {% if submission and submission.git_retrieved_source %}
+    <p class="text-muted mb-2"><strong>Retrieved as:</strong>
+      {% if submission.git_retrieved_source == 'patch' %}unified diff from the commit (<code>files[].patch</code>)
+      {% elif submission.git_retrieved_source == 'raw_url' %}raw file from <code>raw_url</code>
+      {% elif submission.git_retrieved_source == 'contents_url' %}Contents API via <code>contents_url</code>
+      {% elif submission.git_retrieved_source == 'contents_api_file' %}file via <code>GET …/contents/{path}</code>
+      {% elif submission.git_retrieved_source == 'contents_api_listing' %}directory listing via <code>GET …/contents</code>
+      {% else %}<code>{{ submission.git_retrieved_source }}</code>
+      {% endif %}
+    </p>
+    {% endif %}
 
     {% if submission and submission.git_retrieved_text %}
     <div class="border rounded p-2 bg-light" style="max-height: 18rem; overflow: auto;">

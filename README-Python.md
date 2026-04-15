@@ -96,6 +96,8 @@ Set **`OLLAMA_MODEL`** to the tag you pulled. If Ollama is missing or unreachabl
 
 Mentor flows that **fetch** submission code need **`GIT_PROVIDER_BASE_URL`** (non-empty), e.g. **`https://api.github.com`** for GitHub’s REST API. **`GIT_PROVIDER_TOKEN`** is optional for public repositories but helps with rate limits and is required for private repos. Optional **`GIT_PROVIDER_TIMEOUT_SECONDS`** defaults to **45** in application settings when unset (see [docs/deployment-guide.md](docs/deployment-guide.md) and [docs/development-guide.md](docs/development-guide.md)).
 
+**Fetch behavior:** **Path scope** is **optional**. If it is **empty**, the app loads the repository **root** via **`GET /repos/{owner}/{repo}/contents?ref={ref}`** (directory listing). If it is **set**, the app calls **`GET /repos/{owner}/{repo}/commits/{ref}`** first (where **`ref`** is the intern’s commit SHA, branch, or tag), resolves a row in **`files[]`** (exact path match, suffix path, unique basename match, or a **single-file** commit), then **prefers the `patch` string** (unified diff) for **Source retrieval** when GitHub includes it. If **`patch`** is missing or empty, it loads **file text** from **`raw_url`**, then from **`contents_url`** (Contents JSON with base64 **`content`**). If that row cannot be resolved or those steps fail, it falls back to **`GET /repos/{owner}/{repo}/contents/{path}?ref={ref}`**. The workspace shows **how** the text was retrieved (e.g. unified diff vs raw file).
+
 With **Docker Compose**, define these in **`.env`** at the repo root: **`docker-compose.yml`** forwards them to the **`app`** service so the process sees the same variables as on the host.
 
 ## User flows by role

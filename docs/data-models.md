@@ -43,7 +43,7 @@ Links `task_id` + `intern_user_id` (unique pair); FKs to `tasks`, `users`.
 
 One row per `(task_id, intern_user_id)` pair (unique): `repo_identifier`, `commit_sha`, `path_scope`, `status`, timestamps.
 
-**Git retrieval (Epic 3):** `git_retrieval_state`, `git_retrieval_error_code`, `git_retrieved_text`, `git_last_success_at`, `git_last_attempt_at`, `git_fetch_version`.
+**Git retrieval (Epic 3):** `git_retrieval_state`, `git_retrieval_error_code`, `git_retrieved_text`, `git_retrieved_source` (e.g. `patch`, `raw_url`, `contents_url`, `contents_api_file`, `contents_api_listing`), `git_last_success_at`, `git_last_attempt_at`, `git_fetch_version`.
 
 ## Mentor review
 

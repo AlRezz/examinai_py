@@ -313,6 +313,7 @@ def post_submission_fetch(
         submission.git_retrieval_state = "failed"
         submission.git_retrieval_error_code = code
         submission.git_retrieved_text = None
+        submission.git_retrieved_source = None
         submission.git_last_attempt_at = now
         submission.updated_at = now
         db.commit()
@@ -367,6 +368,7 @@ def post_submission_fetch(
         submission.git_retrieval_state = "success"
         submission.git_retrieval_error_code = None
         submission.git_retrieved_text = result.normalized_text
+        submission.git_retrieved_source = result.source_kind
         submission.git_last_success_at = now2
         submission.git_fetch_version = _git_fetch_version_token(result.normalized_text)
         db.commit()
@@ -377,6 +379,7 @@ def post_submission_fetch(
     submission.git_retrieval_state = "failed"
     submission.git_retrieval_error_code = code
     submission.git_retrieved_text = None
+    submission.git_retrieved_source = None
     db.commit()
     request.session["_flash"] = (
         f"Git fetch failed ({code}). "

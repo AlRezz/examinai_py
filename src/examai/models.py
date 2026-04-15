@@ -133,6 +133,7 @@ class Submission(Base):
     git_retrieval_state: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     git_retrieval_error_code: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     git_retrieved_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    git_retrieved_source: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     git_last_success_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     git_last_attempt_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     git_fetch_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

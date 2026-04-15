@@ -12,6 +12,7 @@ from sqlalchemy import select
 from examai.bootstrap import ensure_roles
 from examai.database import get_session_factory
 from examai.integration.ai import OllamaClientError
+from examai.integration.git_provider import GitFetchResult
 from examai.models import AiDraft, ModelInvocation, PublishedReview, Submission, Task, User
 from examai.security import hash_password
 
@@ -508,4 +509,167 @@ def test_intern_forbidden_post_coordinates(client: TestClient) -> None:
         ).status_code
         == 403
     )
+
+
+def test_intern_forbidden_post_fetch(client: TestClient) -> None:
+    """POST /tasks/.../fetch is mentor or administrator only (FR5)."""
+    trigger_lifespan(client)
+    _seed_user("mw-intern-fetch@example.com", "secret", "intern")
+    login_with_password(client, "mw-intern-fetch@example.com", "secret")
+    tid, iid = uuid.uuid4(), uuid.uuid4()
+    assert (
+        client.post(
+            f"/tasks/{tid}/submissions/{iid}/fetch",
+            data={"csrf_token": "x"},
+        ).status_code
+        == 403
+    )
+
+
+def test_git_fetch_success_persists_state(client: TestClient, test_settings) -> None:
+    """Story 4.3: POST .../fetch updates git_retrieval_* when provider returns content."""
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="gf-mentor@example.com",
+        intern_email="gf-intern@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+
+    patched = replace(
+        test_settings,
+        git_provider_base_url="https://api.github.com",
+        git_provider_token="",
+    )
+
+    def _fake_fetch(**_kwargs: object) -> GitFetchResult:
+        return GitFetchResult(ok=True, normalized_text="alpha\nbravo")
+
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        with patch("examai.mentor_workspace_routes.fetch_repository_contents", _fake_fetch):
+            page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+            csrf = extract_csrf(page.text)
+            r = client.post(
+                f"/tasks/{task_id}/submissions/{intern_id}/fetch",
+                data={"csrf_token": csrf},
+                follow_redirects=False,
+            )
+            assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        assert sub.git_retrieval_state == "success"
+        assert sub.git_retrieved_text and "alpha" in sub.git_retrieved_text
+        assert sub.git_fetch_version
+        assert sub.git_retrieval_error_code is None
+    finally:
+        db.close()
+
+    page2 = client.get(f"/tasks/{task_id}/submissions/{intern_id}", follow_redirects=False)
+    assert page2.status_code == 200
+    assert "Git source retrieved successfully" in page2.text
+
+
+def test_git_fetch_not_configured_sets_failure(client: TestClient, test_settings) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="gf-mentor-nc@example.com",
+        intern_email="gf-intern-nc@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+
+    patched = replace(test_settings, git_provider_base_url="")
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+        csrf = extract_csrf(page.text)
+        r = client.post(
+            f"/tasks/{task_id}/submissions/{intern_id}/fetch",
+            data={"csrf_token": csrf},
+            follow_redirects=False,
+        )
+        assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        assert sub.git_retrieval_state == "failed"
+        assert sub.git_retrieval_error_code == "GIT_NOT_CONFIGURED"
+    finally:
+        db.close()
+
+
+def test_git_fetch_requires_commit_sha(client: TestClient, test_settings) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="gf-mentor-sha@example.com",
+        intern_email="gf-intern-sha@example.com",
+    )
+    db = get_session_factory()()
+    try:
+        sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        sub.commit_sha = None
+        db.commit()
+    finally:
+        db.close()
+
+    login_with_password(client, mentor.email, "secret")
+    patched = replace(
+        test_settings,
+        git_provider_base_url="https://api.github.com",
+    )
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        with patch("examai.mentor_workspace_routes.fetch_repository_contents") as mock_fetch:
+            page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+            csrf = extract_csrf(page.text)
+            r = client.post(
+                f"/tasks/{task_id}/submissions/{intern_id}/fetch",
+                data={"csrf_token": csrf},
+                follow_redirects=False,
+            )
+            assert r.status_code == 303
+            mock_fetch.assert_not_called()
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        assert sub.git_retrieval_error_code == "COMMIT_SHA_REQUIRED"
+    finally:
+        db.close()
+
+
+def test_git_fetch_provider_error_sets_code(client: TestClient, test_settings) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="gf-mentor-err@example.com",
+        intern_email="gf-intern-err@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+
+    patched = replace(
+        test_settings,
+        git_provider_base_url="https://api.github.com",
+    )
+
+    def _fail(**_kwargs: object) -> GitFetchResult:
+        return GitFetchResult(ok=False, error_code="NOT_FOUND")
+
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        with patch("examai.mentor_workspace_routes.fetch_repository_contents", _fail):
+            page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+            csrf = extract_csrf(page.text)
+            r = client.post(
+                f"/tasks/{task_id}/submissions/{intern_id}/fetch",
+                data={"csrf_token": csrf},
+                follow_redirects=False,
+            )
+            assert r.status_code == 303
+
+    db = get_session_factory()()
+    try:
+        sub = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        assert sub.git_retrieval_state == "failed"
+        assert sub.git_retrieval_error_code == "NOT_FOUND"
+        assert sub.git_retrieved_text is None
+    finally:
+        db.close()
 

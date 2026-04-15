@@ -1,6 +1,46 @@
 <div class="card border-secondary mb-3">
-  <div class="card-header py-2">Source retrieval</div>
-  <div class="card-body small text-muted mb-0">
-    Git fetch status and retrieved source will appear here when <strong>Epic 4</strong> Git integration is active for this workspace.
+  <div class="card-header py-2 d-flex justify-content-between align-items-center">
+    <span>Source retrieval</span>
+    {% if submission and submission.git_retrieval_state %}
+    <span class="badge {% if submission.git_retrieval_state == 'success' %}bg-success{% elif submission.git_retrieval_state == 'failed' %}bg-danger{% elif submission.git_retrieval_state == 'fetching' %}bg-info text-dark{% else %}bg-secondary{% endif %}">{{ submission.git_retrieval_state }}</span>
+    {% endif %}
+  </div>
+  <div class="card-body small">
+    {% if not submission %}
+    <p class="text-muted mb-0">Save repository coordinates above to create a submission record before fetching source.</p>
+    {% elif not git_provider_configured %}
+    <div class="alert alert-warning py-2 mb-3" role="status">
+      Git provider is not configured. Set <code>GIT_PROVIDER_BASE_URL</code> (and optional <code>GIT_PROVIDER_TOKEN</code>) to enable fetches.
+    </div>
+    {% else %}
+    <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/fetch" class="mb-3">
+      {% include "fragments/csrf-field.html" %}
+      <button type="submit" class="btn btn-outline-primary btn-sm"
+        {% if submission.git_retrieval_state == 'fetching' %}disabled aria-busy="true"{% endif %}>
+        {% if submission.git_retrieval_state == 'fetching' %}Fetching…{% else %}Fetch source from Git provider{% endif %}
+      </button>
+      <p class="text-muted mt-2 mb-0">Uses the commit SHA and optional path scope from coordinates. State is stored on the submission (FR20, FR29).</p>
+    </form>
+    {% endif %}
+
+    {% if submission and submission.git_retrieval_error_code %}
+    <p class="{% if submission.git_retrieval_state == 'failed' %}text-danger{% else %}text-muted{% endif %} mb-2"><strong>Error code:</strong> <code>{{ submission.git_retrieval_error_code }}</code></p>
+    {% endif %}
+
+    {% if submission and submission.git_last_attempt_at %}
+    <p class="text-muted mb-2"><strong>Last attempt:</strong> {{ submission.git_last_attempt_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+    {% endif %}
+    {% if submission and submission.git_last_success_at %}
+    <p class="text-muted mb-2"><strong>Last success:</strong> {{ submission.git_last_success_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+    {% endif %}
+    {% if submission and submission.git_fetch_version %}
+    <p class="text-muted mb-2"><strong>Fetch version:</strong> <code class="small">{{ submission.git_fetch_version }}</code></p>
+    {% endif %}
+
+    {% if submission and submission.git_retrieved_text %}
+    <div class="border rounded p-2 bg-light" style="max-height: 18rem; overflow: auto;">
+      <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ submission.git_retrieved_text }}</pre>
+    </div>
+    {% endif %}
   </div>
 </div>

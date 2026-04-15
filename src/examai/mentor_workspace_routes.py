@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -17,6 +18,7 @@ from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import get_db
 from examai.http.security_middleware import SESSION_USER_KEY
 from examai.integration.ai import OllamaClientError, ollama_generate
+from examai.integration.git_provider import fetch_repository_contents, parse_repo_identifier
 from examai.intern_tasks_repo import upsert_intern_submission_coordinates
 from examai.models import AiDraft, ModelInvocation, Task
 from examai.mentor_workspace_repo import (
@@ -75,6 +77,7 @@ def _prompt_hash(prompt: str) -> str:
 
 
 _AI_FLASH_DETAIL_MAX = 320
+_GIT_FLASH_DETAIL_MAX = 320
 
 
 def _shorten_for_flash(msg: str, *, max_len: int = _AI_FLASH_DETAIL_MAX) -> str:
@@ -82,6 +85,12 @@ def _shorten_for_flash(msg: str, *, max_len: int = _AI_FLASH_DETAIL_MAX) -> str:
     if len(s) <= max_len:
         return s
     return s[: max_len - 1] + "…"
+
+
+def _git_fetch_version_token(normalized_text: str) -> str:
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:12]
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return f"{stamp}-{digest}"
 
 
 def _parse_score(raw: str) -> Optional[int]:
@@ -174,6 +183,7 @@ def submission_workspace(
     flash = request.session.pop("_flash", None)
 
     ollama_configured = bool(settings.ollama_base_url)
+    git_provider_configured = bool(settings.git_provider_base_url)
     flash_lower = (flash or "").lower()
     degraded_inference = (not ollama_configured) or (
         flash is not None
@@ -199,6 +209,7 @@ def submission_workspace(
             "mentor_draft": mentor_draft,
             "published": published,
             "ollama_configured": ollama_configured,
+            "git_provider_configured": git_provider_configured,
             "degraded_inference": degraded_inference,
         },
     )
@@ -247,6 +258,110 @@ def post_submission_coordinates(
 
     upsert_intern_submission_coordinates(db, task_id, intern_id, repo, csha, pscope)
     request.session["_flash"] = "Submission coordinates saved."
+    return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+
+@router.post("/tasks/{task_id}/submissions/{intern_id}/fetch")
+def post_submission_fetch(
+    request: Request,
+    task_id: uuid.UUID,
+    intern_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    csrf_token: str = Form(...),
+) -> RedirectResponse:
+    """POST /tasks/{taskId}/submissions/{internId}/fetch — FR20, FR29, FR31."""
+    if not validate_csrf(request.session, csrf_token):
+        request.session["_flash"] = "Invalid or missing security token. Try again."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        request.session["_flash"] = "That task was not found."
+        return RedirectResponse(url="/tasks", status_code=303)
+    if not intern_assigned_to_task(db, task_id, intern_id):
+        request.session["_flash"] = "That intern is not assigned to this task."
+        return RedirectResponse(url=f"/tasks/{task_id}/submissions", status_code=303)
+
+    submission = get_submission_for_pair(db, task_id, intern_id)
+    if submission is None:
+        request.session["_flash"] = "No submission record exists yet. Save coordinates first."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    settings = get_settings()
+    now = datetime.now(timezone.utc)
+
+    def _persist_failure(code: str, flash: str) -> RedirectResponse:
+        submission.git_retrieval_state = "failed"
+        submission.git_retrieval_error_code = code
+        submission.git_retrieved_text = None
+        submission.git_last_attempt_at = now
+        submission.updated_at = now
+        db.commit()
+        request.session["_flash"] = flash
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    if not settings.git_provider_base_url:
+        return _persist_failure(
+            "GIT_NOT_CONFIGURED",
+            "Git fetch unavailable: set GIT_PROVIDER_BASE_URL (and optional GIT_PROVIDER_TOKEN).",
+        )
+
+    csha = (submission.commit_sha or "").strip()
+    if not csha:
+        return _persist_failure(
+            "COMMIT_SHA_REQUIRED",
+            "Git fetch needs a commit SHA. Enter one under repository coordinates, save, then fetch again.",
+        )
+
+    try:
+        owner, repo = parse_repo_identifier(submission.repo_identifier)
+    except ValueError as e:
+        detail = _shorten_for_flash(str(e), max_len=_GIT_FLASH_DETAIL_MAX)
+        return _persist_failure("INVALID_REPO", f"Git fetch failed: {detail}")
+
+    submission.git_retrieval_state = "fetching"
+    submission.git_retrieval_error_code = None
+    submission.git_last_attempt_at = now
+    submission.updated_at = now
+    db.commit()
+
+    result = fetch_repository_contents(
+        api_base=settings.git_provider_base_url,
+        token=settings.git_provider_token,
+        owner=owner,
+        repo=repo,
+        ref=csha,
+        path_scope=submission.path_scope,
+        timeout_seconds=settings.git_provider_timeout_seconds,
+    )
+
+    now2 = datetime.now(timezone.utc)
+    submission = get_submission_for_pair(db, task_id, intern_id)
+    if submission is None:
+        request.session["_flash"] = "Submission disappeared during Git fetch. Try again."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    submission.updated_at = now2
+    submission.git_last_attempt_at = now2
+
+    if result.ok and result.normalized_text is not None:
+        submission.git_retrieval_state = "success"
+        submission.git_retrieval_error_code = None
+        submission.git_retrieved_text = result.normalized_text
+        submission.git_last_success_at = now2
+        submission.git_fetch_version = _git_fetch_version_token(result.normalized_text)
+        db.commit()
+        request.session["_flash"] = "Git source retrieved successfully."
+        return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
+
+    code = result.error_code or "UNKNOWN"
+    submission.git_retrieval_state = "failed"
+    submission.git_retrieval_error_code = code
+    submission.git_retrieved_text = None
+    db.commit()
+    request.session["_flash"] = (
+        f"Git fetch failed ({code}). "
+        "Check coordinates, token, and provider access — you can adjust coordinates and retry."
+    )
     return RedirectResponse(url=_redirect_workspace(task_id, intern_id), status_code=303)
 
 

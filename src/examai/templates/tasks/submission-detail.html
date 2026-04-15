@@ -31,7 +31,8 @@
     <p class="text-muted mb-3">{{ task.title }} · {{ intern.email }}</p>
 
     {% if flash %}
-    <div class="alert {% if 'could not' in flash.lower() or 'not configured' in flash.lower() %}alert-warning{% elif 'published' in flash.lower() or 'saved' in flash.lower() or 'generated' in flash.lower() %}alert-success{% else %}alert-info{% endif %}" role="alert">
+    {% set fl = flash.lower() %}
+    <div class="alert {% if 'could not' in fl or ('not configured' in fl and 'git source retrieved' not in fl) or 'git fetch unavailable' in fl or ('git fetch failed' in fl) or 'git fetch needs' in fl %}alert-warning{% elif 'published' in fl or 'saved' in fl or 'generated' in fl or 'git source retrieved successfully' in fl %}alert-success{% else %}alert-info{% endif %}" role="alert">
       {{ flash }}
     </div>
     {% endif %}

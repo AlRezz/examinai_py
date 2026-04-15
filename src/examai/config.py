@@ -20,6 +20,9 @@ class Settings:
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: float = 120.0
     ollama_max_retries: int = 2
+    git_provider_base_url: str = ""
+    git_provider_token: str = ""
+    git_provider_timeout_seconds: float = 45.0
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -54,6 +57,15 @@ def get_settings() -> Settings:
         ollama_retries = 2
     ollama_retries = max(1, min(ollama_retries, 5))
 
+    git_base = (os.environ.get("GIT_PROVIDER_BASE_URL") or "").strip().rstrip("/")
+    git_token = (os.environ.get("GIT_PROVIDER_TOKEN") or "").strip()
+    git_timeout_raw = os.environ.get("GIT_PROVIDER_TIMEOUT_SECONDS")
+    try:
+        git_timeout = float(git_timeout_raw) if git_timeout_raw else 45.0
+    except ValueError:
+        git_timeout = 45.0
+    git_timeout = max(5.0, min(git_timeout, 120.0))
+
     return Settings(
         secret_key=secret_key,
         database_url=database_url,
@@ -62,6 +74,9 @@ def get_settings() -> Settings:
         ollama_model=ollama_model,
         ollama_timeout_seconds=ollama_timeout,
         ollama_max_retries=ollama_retries,
+        git_provider_base_url=git_base,
+        git_provider_token=git_token,
+        git_provider_timeout_seconds=git_timeout,
     )
 
 

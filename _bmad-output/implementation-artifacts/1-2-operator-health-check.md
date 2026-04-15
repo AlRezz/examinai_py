@@ -1,6 +1,6 @@
 # Story 1.2: Operator health check
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -92,8 +92,8 @@ Composer (Cursor agent)
 
 ## Review Findings
 
-- [ ] [Review][Patch] Strengthen health tests for AC2–AC3 — assert `Content-Type` is JSON on subpath responses (parity with root test) and call at least one subpath in the unauthenticated test so AC3 explicitly covers `/actuator/health/**`, not only the root. [`tests/test_health.py`]
+- [x] [Review][Patch] Strengthen health tests for AC2–AC3 — assert `Content-Type` is JSON on subpath responses (parity with root test) and call at least one subpath in the unauthenticated test so AC3 explicitly covers `/actuator/health/**`, not only the root. [`tests/test_health.py`] — fixed 2026-04-15
 
 ---
 
-**Story completion status:** Ready for code review (status `review`).
+**Story completion status:** Done (code review complete).

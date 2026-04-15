@@ -53,11 +53,16 @@ services:
     environment:
       EXAMINAI_USE_LIQUIBASE: "1"
       EXAMINAI_DATABASE_URL: postgresql+psycopg://examinai:examinai@db:5432/examinai
-      EXAMINAI_ADMIN_INITIAL_PASSWORD: ${EXAMINAI_ADMIN_INITIAL_PASSWORD:-}
+      # Local dev: seeds first admin when unset (Story 8.2). Override in `.env` for any shared or production deploy.
+      EXAMINAI_ADMIN_INITIAL_PASSWORD: ${EXAMINAI_ADMIN_INITIAL_PASSWORD:-Admin}
       EXAMINAI_ADMIN_EMAIL: ${EXAMINAI_ADMIN_EMAIL:-admin@examinai.local}
       OLLAMA_BASE_URL: http://llm:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       EXAMINAI_SECRET_KEY: ${EXAMINAI_SECRET_KEY:-dev-insecure-change-me}
+      # Mentor submission workspace Git fetch (HTTP GitHub-compatible API); see README-Python.md
+      GIT_PROVIDER_BASE_URL: ${GIT_PROVIDER_BASE_URL:-}
+      GIT_PROVIDER_TOKEN: ${GIT_PROVIDER_TOKEN:-}
+      GIT_PROVIDER_TIMEOUT_SECONDS: ${GIT_PROVIDER_TIMEOUT_SECONDS:-}
     ports:
       - "8080:8080"
     depends_on:

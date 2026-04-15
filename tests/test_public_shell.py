@@ -10,6 +10,14 @@ def test_public_pages_return_html(client: TestClient) -> None:
         assert "text/html" in r.headers.get("content-type", ""), path
 
 
+def test_welcome_page_has_no_jquery_ui_demo(client: TestClient) -> None:
+    r = client.get("/")
+    assert r.status_code == 200
+    body = r.text
+    assert "jQuery UI check" not in body
+    assert "welcome-accordion" not in body
+
+
 def test_error_accepts_optional_message_query(client: TestClient) -> None:
     r = client.get("/error", params={"message": "Custom"})
     assert r.status_code == 200

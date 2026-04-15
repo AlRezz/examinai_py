@@ -73,3 +73,11 @@ so that **schema stays aligned with code in every environment that runs the cont
 ---
 
 **Context engine notes:** Ultimate story context created for Epic 8.3 — migration authority vs existing docs is the main architectural decision.
+
+---
+
+## Addendum: local administrator default (Compose)
+
+**After 8.3 / 8.8 sidecar flow:** **`docker compose`** sets **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** to **`Admin`** by default when not provided in **`.env`**, so a first-time local stack gets a predictable administrator (**`admin@examinai.local`** by default) after **`db-migrate`** and app startup. Operators **must** override for shared or production hosts.
+
+**Implementation:** `docker-compose.yml` (`app` service) — `${EXAMINAI_ADMIN_INITIAL_PASSWORD:-Admin}`; documented in **README-Python.md**, **`.env.example`**, **docs/deployment-guide.md**.

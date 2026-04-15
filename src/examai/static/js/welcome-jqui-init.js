@@ -1,6 +1,6 @@
 /**
- * jQuery UI init for the landing page demo (Story 1-1).
- * Expects jQuery, jQuery UI, and #welcome-accordion in the DOM.
+ * jQuery UI accordion init (Story 1-1 demo assets). Expects jQuery, jQuery UI, and #welcome-accordion.
+ * Not loaded by `/` after Story 8-9; kept for optional demos and static route tests.
  */
 (function ($) {
   "use strict";

@@ -37,7 +37,7 @@ docker compose up --build
 
 The **`db-migrate`** service uses the official **`liquibase/liquibase`** image to apply **`db/changelog/`** after **`db`** is healthy and **before** **`app`** starts (Compose `depends_on: service_completed_successfully`). The **app** image is Python-only (no OpenJDK). The **app** service sets **`EXAMINAI_USE_LIQUIBASE=1`** so the server skips SQLAlchemy `create_all` and expects Liquibase-managed tables.
 
-Set **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** (and optionally **`EXAMINAI_ADMIN_EMAIL`**) in `.env` so the first **administrator** account is created after migrations (see `.env.example`). Init scripts under **`db/init/`** are mounted into Postgres and run **once** on an empty data volume; they do **not** replace Liquibase DDL.
+With **`docker compose`**, **`EXAMINAI_ADMIN_INITIAL_PASSWORD`** defaults to **`Admin`** when not set in `.env`, so the first **administrator** is created after migrations (**`admin@examinai.local`** unless you set **`EXAMINAI_ADMIN_EMAIL`**). Override the password in **`.env`** for shared or production environments (see **`.env.example`**). Init scripts under **`db/init/`** are mounted into Postgres and run **once** on an empty data volume; they do **not** replace Liquibase DDL.
 
 **Run migrations only** (e.g. after pulling new changelogs): `docker compose run --rm db-migrate`
 
@@ -91,6 +91,12 @@ docker compose exec llm ollama pull llama3.2
 ```
 
 Set **`OLLAMA_MODEL`** to the tag you pulled. If Ollama is missing or unreachable, mentor AI-draft flows show a **degraded** state; human review still works (see [docs/deployment-guide.md](docs/deployment-guide.md) and FR31–FR32 in the PRD).
+
+### Git provider (mentor submission workspace)
+
+Mentor flows that **fetch** submission code need **`GIT_PROVIDER_BASE_URL`** (non-empty), e.g. **`https://api.github.com`** for GitHub’s REST API. **`GIT_PROVIDER_TOKEN`** is optional for public repositories but helps with rate limits and is required for private repos. Optional **`GIT_PROVIDER_TIMEOUT_SECONDS`** defaults to **45** in application settings when unset (see [docs/deployment-guide.md](docs/deployment-guide.md) and [docs/development-guide.md](docs/development-guide.md)).
+
+With **Docker Compose**, define these in **`.env`** at the repo root: **`docker-compose.yml`** forwards them to the **`app`** service so the process sees the same variables as on the host.
 
 ## User flows by role
 

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "examai"
+version = "0.1.0"
+description = "Examinai — Python implementation (migration from JAVA_APP)"
+readme = "README-Python.md"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.115.0,<0.117",
+    "uvicorn[standard]>=0.32.0,<0.36",
+    "jinja2>=3.1.4,<4",
+    "python-multipart>=0.0.12,<0.1",
+    "sqlalchemy>=2.0.36,<2.1",
+    "alembic>=1.14.0,<2",
+    "psycopg[binary]>=3.2.0,<4",
+    "httpx>=0.28.0,<0.29",
+    "itsdangerous>=2.2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0,<9",
+    "pytest-cov>=6.0.0,<7",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["src/examai"]
+branch = true

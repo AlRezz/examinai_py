@@ -1,0 +1,128 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-04-15T12:00:00Z",
+    "last_updated": "2026-04-15T12:00:00Z",
+    "completed": "2026-04-15T12:00:00Z"
+  },
+  "mode": "initial_scan",
+  "scan_level": "deep",
+  "project_root": "/Users/aliaksandr.razviakou/Documents/examinai_py",
+  "project_knowledge": "/Users/aliaksandr.razviakou/Documents/examinai_py/docs",
+  "repository_type": "monolith",
+  "project_parts": [
+    {
+      "part_id": "app",
+      "project_type_id": "backend",
+      "display_name": "Examinai Spring Boot application",
+      "root_path": "/Users/aliaksandr.razviakou/Documents/examinai_py"
+    }
+  ],
+  "completed_steps": [
+    {
+      "step": "step_1",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Classified as monolith with 1 part; backend (pom.xml, Spring Boot); Thymeleaf server-rendered UI"
+    },
+    {
+      "step": "step_2",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Existing docs: README.md at repo root; _bmad-output/planning-artifacts referenced by README; no prior docs/index.md"
+    },
+    {
+      "step": "step_3",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Tech stack: Java 21, Spring Boot 3.5, Thymeleaf, Spring Security, JPA, Liquibase, PostgreSQL, Spring AI Ollama"
+    },
+    {
+      "step": "step_4",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Conditional analysis: HTTP routes cataloged; Liquibase schema summarized; templates/static inventoried"
+    },
+    {
+      "step": "step_5",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Source tree documented in source-tree-analysis.md"
+    },
+    {
+      "step": "step_6",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Dev and deployment extracted from README, pom.xml, Dockerfile, docker-compose.yml"
+    },
+    {
+      "step": "step_7",
+      "status": "skipped",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Single-part monolith; no integration-architecture between parts"
+    },
+    {
+      "step": "step_8",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "architecture.md written"
+    },
+    {
+      "step": "step_9",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Supporting docs: project-overview, development-guide, deployment-guide, component-inventory"
+    },
+    {
+      "step": "step_10",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "index.md generated"
+    },
+    {
+      "step": "step_11",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Validation: checklist reviewed; no incomplete markers in index"
+    },
+    {
+      "step": "step_12",
+      "status": "completed",
+      "timestamp": "2026-04-15T12:00:00Z",
+      "summary": "Workflow complete"
+    }
+  ],
+  "current_step": "completed",
+  "findings": {
+    "project_classification": "Monolithic Spring Boot app: web (Thymeleaf), REST-less primary UX (form posts), role-based security, Postgres + Liquibase, Ollama for AI drafts, GitHub-compatible API for source fetch.",
+    "technology_stack": {
+      "primary_framework": "Spring Boot 3.5.13",
+      "language": "Java 21",
+      "database": "PostgreSQL (H2 test)",
+      "migrations": "Liquibase YAML under src/main/resources/db/changelog/"
+    },
+    "batches_completed": [
+      {
+        "path": "src/main/java/com/examinai/app/web",
+        "summary": "Controller routes extracted via static analysis"
+      },
+      {
+        "path": "src/main/resources/db/changelog/changes",
+        "summary": "Schema entities from Liquibase changelogs 001-006"
+      }
+    ]
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "index.md",
+    "project-overview.md",
+    "architecture.md",
+    "source-tree-analysis.md",
+    "api-contracts.md",
+    "data-models.md",
+    "component-inventory.md",
+    "development-guide.md",
+    "deployment-guide.md"
+  ],
+  "resume_instructions": "Workflow finished; re-run document-project with full_rescan to refresh"
+}

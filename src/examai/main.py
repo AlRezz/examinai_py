@@ -27,10 +27,17 @@ def create_app() -> FastAPI:
     static_root = root / "static"
     templates = Jinja2Templates(directory=str(root / "templates"))
 
+    _HEALTH_BODY: Dict[str, str] = {"status": "UP"}
+
     @app.get("/actuator/health")
     def actuator_health() -> Dict[str, str]:
-        """Compatible with Spring Boot Actuator health path used in runbooks."""
-        return {"status": "UP"}
+        """Spring Boot Actuator-compatible liveness JSON; public (no auth)."""
+        return _HEALTH_BODY
+
+    @app.get("/actuator/health/{subpath:path}")
+    def actuator_health_subpath(subpath: str) -> Dict[str, str]:
+        """Subpaths under /actuator/health/ (e.g. liveness) — same contract as root."""
+        return _HEALTH_BODY
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request) -> HTMLResponse:

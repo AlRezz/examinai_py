@@ -1,6 +1,6 @@
 # Story 6.1: List users
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,17 +30,17 @@ so that **I can manage cohort membership**.
 
 ## Tasks / Subtasks
 
-- [ ] **Route** (AC: 1, 3)  
-  - [ ] `GET /admin/users` with **administrator-only** dependency.
+- [x] **Route** (AC: 1, 3)  
+  - [x] `GET /admin/users` with **administrator-only** dependency.
 
-- [ ] **Query** (AC: 1, 4)  
-  - [ ] List users with optional join to **`user_roles`** / **`roles`** for display.
+- [x] **Query** (AC: 1, 4)  
+  - [x] List users with optional join to **`user_roles`** / **`roles`** for display.
 
-- [ ] **Template** (AC: 2)  
-  - [ ] `admin/users/list.html`; shared layout/fragments per inventory.
+- [x] **Template** (AC: 2)  
+  - [x] `admin/users/list.html`; shared layout/fragments per inventory.
 
-- [ ] **Tests**  
-  - [ ] Admin sees list; mentor/intern denied.
+- [x] **Tests**  
+  - [x] Admin sees list; mentor/intern denied.
 
 ## Dev Notes
 
@@ -61,14 +61,25 @@ so that **I can manage cohort membership**.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Composer (Cursor agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `GET /admin/users` via `admin_routes` + `list_users_with_roles` (eager-loaded roles); RBAC remains in `SecurityMiddleware` (administrator-only for `/admin/**`).
+- Template `admin/users/list.html` mirrors tasks list shell; shows email, enabled, sorted role names; no password hashes in HTML (asserted in tests).
+
 ### File List
+
+- `src/examai/admin_routes.py` (new)
+- `src/examai/main.py`
+- `src/examai/users_repo.py`
+- `src/examai/templates/admin/users/list.html` (new)
+- `src/examai/templates/spaces/admin-users.html` (removed — superseded)
+- `tests/test_auth_rbac.py`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ---
 
-**Story completion status:** Ultimate context engine analysis completed — comprehensive developer guide created. **ready-for-dev.**
+**Story completion status:** Implementation complete; sprint status **review**.

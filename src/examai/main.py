@@ -20,6 +20,7 @@ from examai.csrf import get_or_create_csrf, validate_csrf
 from examai.database import create_schema, get_db, get_session_factory, configure_engine
 from examai.http.security_middleware import SESSION_USER_KEY, SecurityMiddleware
 from examai.security import verify_password
+from examai.admin_routes import router as admin_router
 from examai.coordinator_routes import router as coordinator_router
 from examai.mentor_workspace_routes import router as mentor_workspace_router
 from examai.tasks_routes import router as tasks_router
@@ -54,6 +55,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     app.include_router(tasks_router)
     app.include_router(mentor_workspace_router)
     app.include_router(coordinator_router)
+    app.include_router(admin_router)
 
     root = _package_dir()
     static_root = root / "static"
@@ -163,10 +165,6 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     @app.get("/review/queue", response_class=HTMLResponse)
     def review_queue_placeholder(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(request, "spaces/review-queue.html")
-
-    @app.get("/admin/users", response_class=HTMLResponse)
-    def admin_users_placeholder(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse(request, "spaces/admin-users.html")
 
     @app.get("/error", response_class=HTMLResponse)
     def error_page(

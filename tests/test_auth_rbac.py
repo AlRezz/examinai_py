@@ -158,9 +158,28 @@ def test_rbac_mentor_reaches_tasks(client: TestClient) -> None:
 def test_rbac_admin_reaches_admin_users(client: TestClient) -> None:
     trigger_lifespan(client)
     _seed_user("admin@example.com", "p", "administrator")
+    _seed_user("listed@example.com", "p", "intern")
     login_with_password(client, "admin@example.com", "p")
     r = client.get("/admin/users")
     assert r.status_code == 200
+    assert "Users" in r.text
+    assert "admin@example.com" in r.text
+    assert "listed@example.com" in r.text
+    assert "$2b$" not in r.text
+
+
+def test_rbac_mentor_blocked_from_admin_users(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("mentor-admin@example.com", "p", "mentor")
+    login_with_password(client, "mentor-admin@example.com", "p")
+    assert client.get("/admin/users").status_code == 403
+
+
+def test_rbac_intern_blocked_from_admin_users(client: TestClient) -> None:
+    trigger_lifespan(client)
+    _seed_user("intern-admin@example.com", "p", "intern")
+    login_with_password(client, "intern-admin@example.com", "p")
+    assert client.get("/admin/users").status_code == 403
 
 
 def test_rbac_coordinator_reaches_coordinator(client: TestClient) -> None:

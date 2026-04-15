@@ -43,3 +43,9 @@ def list_users_with_role(session: Session, role_name: str) -> list[User]:
         .order_by(User.email)
     )
     return list(session.scalars(stmt).unique().all())
+
+
+def list_users_with_roles(session: Session) -> list[User]:
+    """All users with roles loaded, ordered by email (admin list; do not expose password_hash in templates)."""
+    stmt = select(User).options(selectinload(User.roles)).order_by(User.email)
+    return list(session.scalars(stmt).unique().all())

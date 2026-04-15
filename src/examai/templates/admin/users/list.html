@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include "fragments/head-bootstrap.html" %}
+  <title>Users — Examinai</title>
+</head>
+<body class="examai-shell d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-light bg-light examai-nav">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <a class="navbar-brand" href="/home">Examinai</a>
+      <div class="d-flex align-items-center gap-3">
+        {% if user %}
+        <span class="small text-muted">{{ user.email }}</span>
+        {% endif %}
+        <a class="nav-link py-0" href="/home">Home</a>
+        {% include "fragments/logout-form.html" %}
+      </div>
+    </div>
+  </nav>
+  <main class="container py-4 flex-grow-1">
+    <h1 class="h3 mb-3">Users</h1>
+    {% if flash %}
+    <div class="alert alert-info" role="alert">{{ flash }}</div>
+    {% endif %}
+    {% if users %}
+    <div class="table-responsive">
+      <table class="table table-sm table-striped align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Email</th>
+            <th scope="col">Enabled</th>
+            <th scope="col">Roles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.email }}</td>
+            <td>{% if u.enabled %}Yes{% else %}No{% endif %}</td>
+            <td class="small">
+              {% if u.roles %}
+                {% for role in u.roles|sort(attribute='name') %}
+                  {{ role.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No users found.</p>
+    {% endif %}
+  </main>
+  {% include "fragments/welcome-scripts.html" %}
+</body>
+</html>

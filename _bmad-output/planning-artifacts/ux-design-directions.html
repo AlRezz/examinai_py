@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Examinai — Design Direction Explorer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root { --examai-brand: #0d6efd; }
+    body { background: #f8f9fa; }
+    .direction-nav { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #dee2e6; }
+    .direction-section { min-height: 100vh; padding: 2rem 0 4rem; border-bottom: 3px solid #dee2e6; }
+    .mock-frame { background: #fff; border: 1px solid #dee2e6; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.06); }
+    .mock-nav { background: #fff; border-bottom: 1px solid rgba(0,0,0,.08); padding: 0.5rem 1rem; }
+    .mock-body { padding: 1.25rem; }
+  </style>
+</head>
+<body>
+  <nav class="direction-nav py-2">
+    <div class="container-fluid d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <strong>Examinai design directions</strong>
+      <div class="btn-group btn-group-sm flex-wrap" role="group">
+        <a class="btn btn-outline-primary" href="#d1">1 · Default</a>
+        <a class="btn btn-outline-primary" href="#d2">2 · Structured ★</a>
+        <a class="btn btn-outline-primary" href="#d3">3 · Dense</a>
+        <a class="btn btn-outline-primary" href="#d4">4 · Calm academic</a>
+      </div>
+    </div>
+  </nav>
+
+  <section id="d1" class="direction-section">
+    <div class="container">
+      <h2>Direction 1 — Bootstrap default</h2>
+      <p class="text-muted mb-4">Minimal theme layer; flat hierarchy. Fastest parity with legacy.</p>
+      <div class="mock-frame">
+        <div class="mock-nav d-flex justify-content-between">
+          <span class="fw-semibold">Mentor · Submission</span>
+          <span class="badge bg-secondary">Draft</span>
+        </div>
+        <div class="mock-body">
+          <h5>task-42 / maya-chen</h5>
+          <p class="font-monospace small bg-light p-2 rounded">repo…/examai @ abc123f · src/</p>
+          <button class="btn btn-primary btn-sm">Fetch source</button>
+          <hr />
+          <label class="form-label">Draft review</label>
+          <textarea class="form-control mb-2" rows="3" readonly>Scores and narrative…</textarea>
+          <button class="btn btn-success">Publish</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="d2" class="direction-section" style="background: #eef4fc;">
+    <div class="container">
+      <h2>Direction 2 — Structured workspace <span class="badge bg-primary">Recommended</span></h2>
+      <p class="text-muted mb-4">Provenance card + status above fold; two-column mentor layout; clear draft vs publish.</p>
+      <div class="mock-frame">
+        <div class="mock-nav d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Mentor · Submission workspace</span>
+          <span class="badge bg-warning text-dark">Awaiting publish</span>
+        </div>
+        <div class="mock-body">
+          <div class="alert alert-info py-2 mb-3"><small>LLM degraded — you can still publish a human-only review.</small></div>
+          <div class="card mb-3 border-primary border-opacity-25">
+            <div class="card-header bg-light py-2"><strong class="small">Evidence</strong></div>
+            <div class="card-body py-2">
+              <code class="d-block small">github.com/org/repo @ deadbeef · pkg/</code>
+              <span class="badge bg-success mt-2">Fetch OK</span>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-lg-5">
+              <div class="border rounded p-2 bg-light" style="max-height:120px;overflow:auto"><pre class="small mb-0">// normalized source preview…</pre></div>
+              <button class="btn btn-outline-secondary btn-sm mt-2">Request AI draft</button>
+            </div>
+            <div class="col-lg-7">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold">Draft review</span>
+                <span class="badge bg-secondary">Not published</span>
+              </div>
+              <textarea class="form-control mb-2" rows="4" readonly>Mentor narrative and rubric fields…</textarea>
+              <button class="btn btn-primary">Publish review</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="d3" class="direction-section">
+    <div class="container">
+      <h2>Direction 3 — Dense table-first</h2>
+      <p class="text-muted mb-4">Queue-heavy; minimal chrome. Best for mentors reviewing many submissions.</p>
+      <div class="mock-frame">
+        <div class="mock-nav"><span class="fw-semibold">Review queue</span></div>
+        <div class="mock-body p-0">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light"><tr><th>Intern</th><th>Task</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Maya C.</td><td>Module 3</td><td><span class="badge bg-warning text-dark">Fetch pending</span></td><td><a href="#">Open</a></td></tr>
+              <tr class="table-primary"><td>Leo R.</td><td>Module 3</td><td><span class="badge bg-info">Ready</span></td><td><a href="#">Open</a></td></tr>
+              <tr><td>Sam K.</td><td>Module 2</td><td><span class="badge bg-success">Published</span></td><td><a href="#">View</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="d4" class="direction-section" style="background: #f5f3ef;">
+    <div class="container">
+      <h2>Direction 4 — Calm academic</h2>
+      <p class="text-muted mb-4">More whitespace; softer headers. Intern-facing feedback emphasis.</p>
+      <div class="mock-frame" style="--bs-primary: #2c5f4f;">
+        <div class="mock-nav" style="background:#2c5f4f;color:#fff"><span class="fw-semibold">Intern · Feedback</span></div>
+        <div class="mock-body px-4 py-4">
+          <p class="text-muted small mb-1">Published review</p>
+          <h4 class="mb-3">Module 3 — API design</h4>
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <p class="small text-muted mb-1">Your submission at publish time</p>
+              <code class="small">@ abc123f · src/api/</code>
+            </div>
+          </div>
+          <h6>Scores</h6>
+          <p class="mb-0">Structured feedback narrative with generous line-height…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="container py-4 text-center text-muted small">
+    Open this file in a browser. Pick a direction (or combine 2 + 3) and tell Sally in chat.
+  </footer>
+</body>
+</html>

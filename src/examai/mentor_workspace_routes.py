@@ -33,6 +33,7 @@ from examai.mentor_workspace_repo import (
     upsert_mentor_review_draft,
     upsert_published_review,
 )
+from examai.submission_lifecycle import mentor_submission_lifecycle_badge
 from examai.tasks_repo import get_task_by_id
 from examai.users_repo import get_user_by_id
 
@@ -239,6 +240,12 @@ def submission_workspace(
     mentor_draft = get_mentor_review_draft(db, submission.id) if submission else None
     published = get_published_review(db, submission.id) if submission else None
 
+    submission_lifecycle = mentor_submission_lifecycle_badge(
+        submission=submission,
+        has_published=published is not None,
+        has_mentor_draft=mentor_draft is not None,
+    )
+
     csrf_token = get_or_create_csrf(request.session)
     flash = request.session.pop("_flash", None)
 
@@ -271,6 +278,7 @@ def submission_workspace(
             "ollama_configured": ollama_configured,
             "git_provider_configured": git_provider_configured,
             "degraded_inference": degraded_inference,
+            "submission_lifecycle": submission_lifecycle,
         },
     )
 

@@ -1,0 +1,54 @@
+<div class="card examai-evidence-card border-primary border-opacity-25 mb-4">
+  <div class="card-header py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <strong class="small">Evidence</strong>
+    {% include "intern/fragments/submission-lifecycle-badge.html" %}
+  </div>
+  <div class="card-body">
+    {% if submission %}
+    <dl class="row small mb-3 examai-provenance">
+      <dt class="col-sm-3 text-muted">Repository</dt>
+      <dd class="col-sm-9 font-monospace mb-1">{{ submission.repo_identifier }}</dd>
+      <dt class="col-sm-3 text-muted">Commit</dt>
+      <dd class="col-sm-9 font-monospace mb-1">{% if submission.commit_sha %}{{ submission.commit_sha }}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+      <dt class="col-sm-3 text-muted">Scope</dt>
+      <dd class="col-sm-9 font-monospace mb-0">{% if submission.path_scope %}{{ submission.path_scope }}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+    </dl>
+    <p class="small text-muted mb-3" id="evidence-fetch-summary">
+      <strong>Fetch status:</strong>
+      {% if submission.git_retrieval_state == 'success' %}Source retrieved successfully.
+      {% elif submission.git_retrieval_state == 'failed' %}Last fetch failed{% if submission.git_retrieval_error_code %} (<code>{{ submission.git_retrieval_error_code }}</code>){% endif %}.
+      {% elif submission.git_retrieval_state == 'fetching' %}Fetch in progress…
+      {% elif not submission.git_retrieval_state %}Not fetched yet.
+      {% else %}{{ submission.git_retrieval_state }}{% endif %}
+      {% if submission.git_last_success_at %} · Last success {{ submission.git_last_success_at.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}
+    </p>
+    {% else %}
+    <p class="small text-muted mb-3">No submission record yet. Save coordinates below to create one so source retrieval and review tools can proceed.</p>
+    {% endif %}
+
+    <h3 class="h6 mb-2" id="coords-heading">Repository coordinates</h3>
+    <p class="small text-muted mb-0">Correct or enter repository, commit, and path scope for this intern so retrieval can proceed.</p>
+    <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/coordinates" class="mt-3">
+      {% include "fragments/csrf-field.html" %}
+      <div class="mb-3">
+        <label for="repo_identifier" class="form-label">Repository</label>
+        <input type="text" class="form-control font-monospace" id="repo_identifier" name="repo_identifier" required
+          maxlength="500" value="{{ submission.repo_identifier if submission else '' }}"
+          autocomplete="off" />
+      </div>
+      <div class="mb-3">
+        <label for="commit_sha" class="form-label">Commit SHA <span class="text-muted">(optional)</span></label>
+        <input type="text" class="form-control font-monospace" id="commit_sha" name="commit_sha"
+          maxlength="64" value="{{ submission.commit_sha if submission and submission.commit_sha else '' }}"
+          autocomplete="off" />
+      </div>
+      <div class="mb-3">
+        <label for="path_scope" class="form-label">Path scope <span class="text-muted">(optional)</span></label>
+        <input type="text" class="form-control font-monospace" id="path_scope" name="path_scope"
+          maxlength="2000" value="{{ submission.path_scope if submission and submission.path_scope else '' }}"
+          autocomplete="off" />
+      </div>
+      <button type="submit" class="btn btn-outline-primary">Save coordinates</button>
+    </form>
+  </div>
+</div>

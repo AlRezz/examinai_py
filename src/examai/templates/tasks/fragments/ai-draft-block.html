@@ -1,0 +1,29 @@
+<div class="card border-secondary mb-3" aria-labelledby="ai-draft-heading">
+  <div class="card-header py-2">
+    <h2 id="ai-draft-heading" class="h6 mb-0">AI draft — not published</h2>
+  </div>
+  <div class="card-body">
+    <p class="small text-muted mb-3">Optional Ollama-assisted rubric draft. Successful runs are audited; you can edit and publish without AI.</p>
+    {% if ai_draft %}
+    <div class="mb-3">
+      <p class="small text-muted mb-1">
+        {% if ai_invocation %}
+        <strong>Latest draft</strong> — {{ ai_invocation.model_name }}{% if ai_invocation.model_version %} · {{ ai_invocation.model_version }}{% endif %} · {{ ai_invocation.invoked_at.strftime('%Y-%m-%d %H:%M UTC') }}
+        {% else %}
+        <strong>Latest draft</strong>
+        {% endif %}
+      </p>
+      <pre class="mb-0 small border rounded p-2 bg-light" style="white-space: pre-wrap;">{{ ai_draft.assessment_text }}</pre>
+    </div>
+    {% endif %}
+    <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/ai-draft-assessment" class="d-inline">
+      {% include "fragments/csrf-field.html" %}
+      <button type="submit" class="btn btn-outline-secondary" {% if not ollama_configured %}aria-describedby="ollama-off-help"{% endif %}>
+        Request AI draft
+      </button>
+      {% if not ollama_configured %}
+      <p id="ollama-off-help" class="small text-muted mt-2 mb-0">Configure Ollama to enable this action. Draft review remains available.</p>
+      {% endif %}
+    </form>
+  </div>
+</div>

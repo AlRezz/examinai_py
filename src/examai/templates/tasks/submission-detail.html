@@ -39,108 +39,36 @@
 
     {% include "tasks/fragments/degraded-inference-banner.html" %}
 
-    <section class="mb-4" aria-labelledby="coords-heading">
-      <h2 id="coords-heading" class="h5">Repository coordinates</h2>
-      <p class="small text-muted mb-0">Correct or enter repository, commit, and path scope for this intern so retrieval can proceed.</p>
-      <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/coordinates" class="mt-3">
-        {% include "fragments/csrf-field.html" %}
-        <div class="mb-3">
-          <label for="repo_identifier" class="form-label">Repository</label>
-          <input type="text" class="form-control" id="repo_identifier" name="repo_identifier" required
-            maxlength="500" value="{{ submission.repo_identifier if submission else '' }}"
-            autocomplete="off" />
-        </div>
-        <div class="mb-3">
-          <label for="commit_sha" class="form-label">Commit SHA <span class="text-muted">(optional)</span></label>
-          <input type="text" class="form-control" id="commit_sha" name="commit_sha"
-            maxlength="64" value="{{ submission.commit_sha if submission and submission.commit_sha else '' }}"
-            autocomplete="off" />
-        </div>
-        <div class="mb-3">
-          <label for="path_scope" class="form-label">Path scope <span class="text-muted">(optional)</span></label>
-          <input type="text" class="form-control" id="path_scope" name="path_scope"
-            maxlength="2000" value="{{ submission.path_scope if submission and submission.path_scope else '' }}"
-            autocomplete="off" />
-        </div>
-        <button type="submit" class="btn btn-primary">Save coordinates</button>
-      </form>
-    </section>
+    {% include "tasks/fragments/evidence-card.html" %}
 
-    {% include "tasks/fragments/git-retrieval.html" %}
-
-    {% if not submission %}
-    <div class="alert alert-secondary" role="status">
-      <strong>No submission record yet.</strong> Save coordinates above to create one, or wait for the intern. AI draft and review tools below require a submission row.
-    </div>
-    {% else %}
-    <section class="mb-4" aria-labelledby="ai-draft-heading">
-      <h2 id="ai-draft-heading" class="h5">AI draft assessment</h2>
-      <p class="small text-muted">Requests Ollama when configured. Successful runs are audited in <code>model_invocations</code> / <code>ai_drafts</code>.</p>
-      {% if ai_draft %}
-      <div class="card mb-3">
-        <div class="card-header py-2 d-flex justify-content-between align-items-center">
-          <span>Latest AI draft</span>
-          {% if ai_invocation %}
-          <span class="small text-muted">{{ ai_invocation.model_name }}{% if ai_invocation.model_version %} · {{ ai_invocation.model_version }}{% endif %} · {{ ai_invocation.invoked_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-          {% endif %}
-        </div>
-        <div class="card-body">
-          <pre class="mb-0 small" style="white-space: pre-wrap;">{{ ai_draft.assessment_text }}</pre>
-        </div>
+    {% if submission %}
+    <div class="row g-4 mb-4">
+      <div class="col-lg-5">
+        {% include "tasks/fragments/git-retrieval.html" %}
       </div>
-      {% endif %}
-      <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/ai-draft-assessment" class="d-inline">
-        {% include "fragments/csrf-field.html" %}
-        <button type="submit" class="btn btn-outline-primary" {% if not ollama_configured %}aria-describedby="ollama-off-help"{% endif %}>
-          Request AI draft
-        </button>
-        {% if not ollama_configured %}
-        <p id="ollama-off-help" class="small text-muted mt-2 mb-0">Configure Ollama to enable this action. Manual review below remains available.</p>
-        {% endif %}
-      </form>
-    </section>
+      <div class="col-lg-7">
+        {% include "tasks/fragments/mentor-draft-panel.html" %}
+        {% include "tasks/fragments/ai-draft-block.html" %}
+      </div>
+    </div>
 
-    <section class="mb-4" aria-labelledby="mentor-draft-heading">
-      <h2 id="mentor-draft-heading" class="h5">Mentor review</h2>
-      <p class="small text-muted">Rubric and narrative feedback; works when AI is unavailable. After <strong>Request AI draft</strong>, scores and text here are filled from the model when parsing succeeds — edit before publishing.</p>
-      <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/review-draft" class="row g-3">
-        {% include "fragments/csrf-field.html" %}
-        <div class="col-md-4">
-          <label for="quality_score" class="form-label">Quality (1–5)</label>
-          <input class="form-control" id="quality_score" name="quality_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.quality_score if mentor_draft and mentor_draft.quality_score else '' }}" />
-        </div>
-        <div class="col-md-4">
-          <label for="readability_score" class="form-label">Readability (1–5)</label>
-          <input class="form-control" id="readability_score" name="readability_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.readability_score if mentor_draft and mentor_draft.readability_score else '' }}" />
-        </div>
-        <div class="col-md-4">
-          <label for="correctness_score" class="form-label">Correctness (1–5)</label>
-          <input class="form-control" id="correctness_score" name="correctness_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.correctness_score if mentor_draft and mentor_draft.correctness_score else '' }}" />
-        </div>
-        <div class="col-12">
-          <label for="narrative_feedback" class="form-label">Narrative feedback</label>
-          <textarea class="form-control" id="narrative_feedback" name="narrative_feedback" rows="5">{{ mentor_draft.narrative_feedback if mentor_draft and mentor_draft.narrative_feedback else '' }}</textarea>
-        </div>
-        <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
-          <button type="submit" class="btn btn-primary">Save draft</button>
-          <button type="submit" class="btn btn-success" formaction="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" formmethod="post">Publish review</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="border-top pt-3" aria-labelledby="publish-heading">
+    <section class="border-top pt-3 text-muted" aria-labelledby="publish-heading">
       <h2 id="publish-heading" class="h6 text-muted">Publish status</h2>
       {% if published %}
-      <p class="small mb-2"><strong>Last published</strong> {{ published.published_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+      <p class="small mb-2">Last published {{ published.published_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
       {% else %}
-      <p class="small text-muted mb-2">No review published for this submission yet. Use <strong>Publish review</strong> above (or publish a saved draft below).</p>
+      <p class="small mb-2">No review published for this submission yet. Use <strong>Publish review</strong> in the draft panel above.</p>
       {% endif %}
-      <p class="small text-muted mb-2">Blank fields are filled from the saved mentor draft. To publish what you last saved without re-editing the form above:</p>
+      <p class="small mb-2">Blank fields are filled from the saved mentor draft. To publish what you last saved without re-editing the form:</p>
       <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" class="d-inline">
         {% include "fragments/csrf-field.html" %}
-        <button type="submit" class="btn btn-outline-success btn-sm">Publish saved draft</button>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Publish saved draft</button>
       </form>
     </section>
+    {% else %}
+    <div class="alert alert-secondary" role="status">
+      <strong>Review tools unavailable.</strong> Save coordinates in the evidence card to create a submission record. AI draft and mentor review require a submission row.
+    </div>
     {% endif %}
   </main>
   {% include "fragments/welcome-scripts.html" %}

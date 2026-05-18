@@ -1,6 +1,6 @@
 # Story 4.9: Commit `patch` matching and source label
 
-Status: review
+Status: done
 
 ## Story
 
@@ -30,4 +30,4 @@ so that **I see unified diffs when GitHub provides them and understand what was 
 
 ---
 
-**Story completion status:** Implemented; pending review.
+**Story completion status:** Done.

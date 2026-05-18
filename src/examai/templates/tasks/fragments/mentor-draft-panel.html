@@ -1,0 +1,34 @@
+<div class="card examai-draft-panel mb-3">
+  <div class="card-header py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h2 id="mentor-draft-heading" class="h6 mb-0">Draft review</h2>
+    {% if not published %}
+    <span class="badge bg-secondary">Draft — not published</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <p class="small text-muted">Rubric and narrative feedback. After <strong>Request AI draft</strong>, scores and text may be pre-filled from the model — edit before publishing.</p>
+    <form method="post" action="/tasks/{{ task.id }}/submissions/{{ intern.id }}/review-draft" class="row g-3">
+      {% include "fragments/csrf-field.html" %}
+      <div class="col-md-4">
+        <label for="quality_score" class="form-label">Quality (1–5)</label>
+        <input class="form-control" id="quality_score" name="quality_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.quality_score if mentor_draft and mentor_draft.quality_score else '' }}" />
+      </div>
+      <div class="col-md-4">
+        <label for="readability_score" class="form-label">Readability (1–5)</label>
+        <input class="form-control" id="readability_score" name="readability_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.readability_score if mentor_draft and mentor_draft.readability_score else '' }}" />
+      </div>
+      <div class="col-md-4">
+        <label for="correctness_score" class="form-label">Correctness (1–5)</label>
+        <input class="form-control" id="correctness_score" name="correctness_score" type="text" inputmode="numeric" maxlength="1" value="{{ mentor_draft.correctness_score if mentor_draft and mentor_draft.correctness_score else '' }}" />
+      </div>
+      <div class="col-12">
+        <label for="narrative_feedback" class="form-label">Narrative feedback</label>
+        <textarea class="form-control" id="narrative_feedback" name="narrative_feedback" rows="5">{{ mentor_draft.narrative_feedback if mentor_draft and mentor_draft.narrative_feedback else '' }}</textarea>
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+        <button type="submit" class="btn btn-outline-secondary">Save draft</button>
+        <button type="submit" class="btn btn-success" formaction="/tasks/{{ task.id }}/submissions/{{ intern.id }}/publish-review" formmethod="post">Publish review</button>
+      </div>
+    </form>
+  </div>
+</div>

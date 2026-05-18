@@ -90,6 +90,63 @@ def test_submissions_list_and_workspace_renders(client: TestClient) -> None:
     assert ws.status_code == 200
     assert "Mentor workspace" in ws.text
     assert "AI draft" in ws.text
+    assert "examai-evidence-card" in ws.text
+    assert "Evidence" in ws.text
+    assert "col-lg-5" in ws.text
+    assert "col-lg-7" in ws.text
+    assert "Draft review" in ws.text
+    assert "Coordinates saved" in ws.text
+    assert "Fetch status:" in ws.text
+    assert "Not fetched yet." in ws.text
+    assert ws.text.index("Save draft") < ws.text.index("Publish review")
+
+
+def test_git_permission_failure_uses_danger_badge(client: TestClient) -> None:
+    trigger_lifespan(client)
+    mentor, _intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="mw-permission@example.com",
+        intern_email="mw-intern-permission@example.com",
+    )
+    db = get_session_factory()()
+    try:
+        submission = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        submission.git_retrieval_state = "failed"
+        submission.git_retrieval_error_code = "PERMISSION_DENIED"
+        db.commit()
+    finally:
+        db.close()
+
+    login_with_password(client, mentor.email, "secret")
+    ws = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+
+    assert ws.status_code == 200
+    assert "PERMISSION_DENIED" in ws.text
+    assert "bg-danger" in ws.text
+
+
+def test_successful_empty_source_does_not_show_unfetched_empty_state(
+    client: TestClient,
+) -> None:
+    trigger_lifespan(client)
+    mentor, _intern, task_id, intern_id, sub_id = _seed_task_with_submission(
+        mentor_email="mw-empty-source@example.com",
+        intern_email="mw-intern-empty-source@example.com",
+    )
+    db = get_session_factory()()
+    try:
+        submission = db.execute(select(Submission).where(Submission.id == sub_id)).scalar_one()
+        submission.git_retrieval_state = "success"
+        submission.git_retrieved_text = ""
+        db.commit()
+    finally:
+        db.close()
+
+    login_with_password(client, mentor.email, "secret")
+    ws = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+
+    assert ws.status_code == 200
+    assert "Source retrieved successfully." in ws.text
+    assert "Fetch source to preview code here." not in ws.text
 
 
 def test_intern_forbidden_on_mentor_submissions_routes(client: TestClient) -> None:
@@ -211,6 +268,20 @@ def test_ai_draft_post_persists_audit_rows(client: TestClient, test_settings) ->
     assert after.status_code == 200
     assert "Assessment draft body" in after.text
     assert "Iterate on edge cases" in after.text
+
+
+def test_degraded_inference_banner_uses_alert_info(client: TestClient, test_settings) -> None:
+    trigger_lifespan(client)
+    mentor, intern, task_id, intern_id, _sub_id = _seed_task_with_submission(
+        mentor_email="mw-degraded-info@example.com",
+        intern_email="mw-intern-deg@example.com",
+    )
+    login_with_password(client, mentor.email, "secret")
+    patched = replace(test_settings, ollama_base_url="")
+    with patch("examai.mentor_workspace_routes.get_settings", lambda: patched):
+        page = client.get(f"/tasks/{task_id}/submissions/{intern_id}")
+    assert 'alert alert-info' in page.text
+    assert "human-only review" in page.text.lower()
 
 
 def test_ai_unconfigured_shows_degraded_and_skips_llm(client: TestClient, test_settings) -> None:

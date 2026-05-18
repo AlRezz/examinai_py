@@ -1,5 +1,5 @@
 # generated: 2026-04-15T16:00:00Z
-# last_updated: 2026-04-15T23:59:00Z
+# last_updated: 2026-05-18T18:00:00Z
 # project: examinai_py
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-04-15T16:00:00Z"
-last_updated: "2026-04-15T23:59:00Z"
+last_updated: "2026-05-18T12:00:00Z"
 project: examinai_py
 project_key: NOKEY
 tracking_system: file-system
@@ -62,7 +62,7 @@ development_status:
   3-4-submission-lifecycle-status-badge: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
+  epic-4: done
   4-1-submissions-list-and-mentor-workspace: done
   4-2-update-coordinates-from-the-workspace: done
   4-3-trigger-git-fetch-with-visible-state: done
@@ -71,7 +71,7 @@ development_status:
   4-6-mentor-review-queue: done
   4-7-commit-first-git-fetch-normalized-text: done
   4-8-git-fetch-optional-path-scope: done
-  4-9-commit-patch-matching-and-source-label: review
+  4-9-commit-patch-matching-and-source-label: done
   epic-4-retrospective: optional
 
   epic-5: done
@@ -106,3 +106,7 @@ development_status:
   epic-9: done
   9-1-ai-draft-rubric-mentor-draft-and-publish-ui: done
   epic-9-retrospective: optional
+
+  epic-10: in-progress
+  10-1-mentor-workspace-structured-layout-phase1: done
+  epic-10-retrospective: optional

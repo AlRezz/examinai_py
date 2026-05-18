@@ -10,3 +10,23 @@ body.examai-shell {
 .navbar.examai-nav {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+.examai-evidence-card .card-header {
+  background-color: rgba(var(--bs-primary-rgb), 0.04);
+}
+
+.examai-provenance {
+  background-color: var(--bs-light);
+  border-radius: 0.375rem;
+  font-family: var(--bs-font-monospace);
+  padding: 0.75rem 0.5rem;
+}
+
+.examai-provenance dd,
+.examai-provenance .font-monospace {
+  word-break: break-all;
+}
+
+.examai-draft-panel .card-header {
+  background-color: var(--bs-light);
+}

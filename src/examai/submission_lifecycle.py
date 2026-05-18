@@ -67,3 +67,72 @@ def intern_submission_lifecycle_badge(
         label=submission.status.replace("_", " ").strip().title() or "Unknown",
         css_class="bg-primary",
     )
+
+
+_AUTH_GIT_ERROR_CODES = frozenset(
+    {
+        "AUTH_DENIED",
+        "FORBIDDEN",
+        "PERMISSION_DENIED",
+        "GIT_AUTH_FAILED",
+    }
+)
+
+
+def _git_failure_badge_class(error_code: str | None) -> str:
+    """Retryable fetch failures use warning; auth/permission use danger (AC5)."""
+    code = (error_code or "").strip().upper()
+    if code in _AUTH_GIT_ERROR_CODES or "AUTH" in code or "FORBIDDEN" in code:
+        return "bg-danger"
+    return "bg-warning text-dark"
+
+
+def mentor_submission_lifecycle_badge(
+    *,
+    submission: Submission | None,
+    has_published: bool,
+    has_mentor_draft: bool,
+) -> SubmissionLifecycleBadge:
+    """
+    Mentor workspace pipeline badge (UX Phase 1).
+    Published wins; draft saved wins over ready-for-review when fetch succeeded.
+    """
+    if submission is None:
+        return SubmissionLifecycleBadge(
+            label="Not submitted",
+            css_class="bg-secondary",
+        )
+    if has_published:
+        return SubmissionLifecycleBadge(
+            label="Published",
+            css_class="bg-success",
+        )
+
+    state = (submission.git_retrieval_state or "").strip().lower()
+    if state in ("pending", "in_progress", "fetching", "running", "queued"):
+        return SubmissionLifecycleBadge(
+            label="Retrieving source…",
+            css_class="bg-warning text-dark",
+        )
+    if state == "failed":
+        detail = submission.git_retrieval_error_code or "retrieval_failed"
+        return SubmissionLifecycleBadge(
+            label="Source retrieval failed",
+            css_class=_git_failure_badge_class(detail),
+            title=detail,
+        )
+    if has_mentor_draft:
+        return SubmissionLifecycleBadge(
+            label="Draft saved",
+            css_class="bg-info text-dark",
+        )
+    if state in ("success", "ok", "complete", "succeeded"):
+        return SubmissionLifecycleBadge(
+            label="Ready for review",
+            css_class="bg-primary",
+        )
+
+    return SubmissionLifecycleBadge(
+        label="Coordinates saved",
+        css_class="bg-info text-dark",
+    )
